@@ -74,6 +74,7 @@ html:has(dialog[open]) {
 }
 
 .modal__body {
+  gap: var(--ref-size-6);
   flex: 1 1 auto;
   min-block-size: 0;
   padding: var(--modal-pad);
