@@ -5,7 +5,7 @@
   --modal-bg: #fff;
   --modal-border: #ddd;
   --modal-backdrop: rgb(0 0 0 / 0.6);
-  --modal-focus: 3px solid #1a56db;
+  --modal-focus: 2px solid #000;
 }
 
 /* Achtergrond niet laten scrollen terwijl de modal open is */
@@ -15,7 +15,7 @@ html:has(dialog[open]) {
 
 .modal {
   inline-size: var(--modal-width);
-  max-block-size: 85vh;
+  max-block-size: 90vh;
   padding: 0;
   border: 0;
   border-radius: var(--modal-radius);
@@ -56,6 +56,7 @@ html:has(dialog[open]) {
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
+  transition:0.3s ease-out;
 }
 
 .modal__close:hover {
