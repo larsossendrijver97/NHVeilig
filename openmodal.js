@@ -1,41 +1,49 @@
 (() => {
   const openers = new WeakMap();
 
-  // Maakt een <h2> van data-modal-title en zet die vooraan in de modal.
-  // Koppelt hem ook als naam van de dialog (aria-labelledby), tenzij die al een naam heeft.
-  const addTitle = (dialog, index) => {
-    const text = dialog.dataset.modalTitle;
-    if (!text || dialog.querySelector('.modal__title')) return;
+  // Bouwt de header: titel (uit data-modal-title) links, sluitknop rechts.
+  // Opbouw: .modal__header > .modal__title + .modal__close
+  const addHeader = (dialog, index) => {
+    let header = dialog.querySelector(':scope > .modal__header');
+    const created = !header;
 
-    const id = `${dialog.id || `modal-${index}`}-title`;
-    const h2 = document.createElement('h2');
-    h2.className = 'modal__title';
-    h2.id = id;
-    h2.textContent = text;
-
-    (dialog.querySelector('.modal__body') || dialog).prepend(h2);
-
-    if (!dialog.hasAttribute('aria-labelledby')) {
-      dialog.setAttribute('aria-labelledby', id);
+    if (!header) {
+      header = document.createElement('div');
+      header.className = 'modal__header';
     }
-  };
 
-  // Voegt een sluitknop toe aan de dialog, tenzij die er al is
-  const addCloseButton = (dialog) => {
-    if (dialog.querySelector(':scope > .modal__close')) return;
+    // Titel: <h2> als eerste in de header, en als naam van de dialog
+    const text = dialog.dataset.modalTitle;
+    if (text && !header.querySelector('.modal__title')) {
+      const id = `${dialog.id || `modal-${index}`}-title`;
+      const h2 = document.createElement('h2');
+      h2.className = 'modal__title';
+      h2.id = id;
+      h2.textContent = text;
+      header.prepend(h2);
 
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'modal__close';
-    btn.setAttribute('data-modal-close', '');
-    btn.setAttribute('aria-label', dialog.dataset.modalCloseLabel || 'Sluiten');
+      if (!dialog.hasAttribute('aria-labelledby')) {
+        dialog.setAttribute('aria-labelledby', id);
+      }
+    }
 
-    const icon = document.createElement('span');
-    icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = '\u00d7'; // ×
+    // Sluitknop: laatste in de header
+    if (!header.querySelector('.modal__close')) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal__close';
+      btn.setAttribute('data-modal-close', '');
+      btn.setAttribute('aria-label', dialog.dataset.modalCloseLabel || 'Sluiten');
 
-    btn.append(icon);
-    dialog.prepend(btn);
+      const icon = document.createElement('span');
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = '\u00d7'; // ×
+
+      btn.append(icon);
+      header.append(btn);
+    }
+
+    if (created) dialog.prepend(header);
   };
 
   // Laadt iframes met data-src bij openen, en leegt ze bij sluiten (stopt ook video/audio)
@@ -52,10 +60,9 @@
     dialog.showModal();
   };
 
-  // Dialogs voorbereiden: titel, sluitknop, close-event en sluitknoppen koppelen
+  // Dialogs voorbereiden: header, close-event en sluitknoppen koppelen
   document.querySelectorAll('dialog[data-modal]').forEach((dialog, index) => {
-    addTitle(dialog, index);
-    addCloseButton(dialog);
+    addHeader(dialog, index);
 
     // Het close-event vuurt ook bij Escape af
     dialog.addEventListener('close', () => {
