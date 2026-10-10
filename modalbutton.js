@@ -1,6 +1,30 @@
-console.log("✅ External JavaScript loaded successfully!");
+(() => {
+  // Laadt iframes met data-src bij openen, en leegt ze bij sluiten (stopt ook video/audio)
+  const setEmbeds = (dialog, active) => {
+    dialog.querySelectorAll('iframe[data-src]').forEach((frame) => {
+      frame.src = active ? frame.dataset.src : 'about:blank';
+    });
+  };
 
-document.body.insertAdjacentHTML(
-  "beforeend",
-  '<div style="position:fixed;bottom:20px;right:20px;padding:15px 20px;background:#111;color:#fff;border-radius:8px;z-index:99999;font-family:Arial,sans-serif;">External JS works ✅</div>'
-);
+  document.querySelectorAll('[data-modal-open]').forEach((trigger) => {
+    const dialog = document.getElementById(trigger.dataset.modalOpen);
+    if (!dialog) return;
+
+    trigger.addEventListener('click', () => {
+      setEmbeds(dialog, true);
+      dialog.showModal();
+    });
+
+    // Het close-event vuurt ook bij Escape af
+    dialog.addEventListener('close', () => {
+      setEmbeds(dialog, false);
+      trigger.focus(); // focus terug naar de openknop
+    });
+  });
+
+  document.querySelectorAll('dialog[data-modal]').forEach((dialog) => {
+    dialog.querySelectorAll('[data-modal-close]').forEach((btn) => {
+      btn.addEventListener('click', () => dialog.close());
+    });
+  });
+})();
