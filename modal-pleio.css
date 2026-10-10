@@ -45,24 +45,27 @@ html:has(dialog[open]) {
 
 .modal__title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--ref-font-size-large);
   color: var(--ref-palette-neutral-100);
 }
 
 .modal__close {
-  inline-size: 2.75rem;
-  block-size: 2.75rem;
+  display: inline-flex;
+  align-items:center;
+  justify-content:center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
   font-size: 1.5rem;
   line-height: 1;
-  border: 0;
-  border-radius: 50%;
+  border: solid 1px #f5f5f5;
+  border-radius: var(--ref-shape-corner-md);
   background: transparent;
   cursor: pointer;
-  transition:0.3s ease-out;
+  transition:0.3s ease;
 }
 
 .modal__close:hover {
-  background: #eee;
+  background: #f7f7f7;
 }
 
 .modal__close:focus-visible {
@@ -71,7 +74,10 @@ html:has(dialog[open]) {
 }
 
 .modal__body {
+  flex: 1 1 auto;
+  min-block-size: 0;
   padding: var(--modal-pad);
+  overscroll-behavior: contain;
   overflow-y: auto;
 }
 
