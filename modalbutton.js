@@ -43,4 +43,6 @@
     }
     open(dialog);
   });
+  
+  console.log('modal gereed');
 })();
