@@ -1,11 +1,11 @@
 :root {
-  --modal-radius: 12px;
-  --modal-pad: 1.5rem;
+  --modal-radius: var(--ref-shape-corner-xl);
+  --modal-pad: var(--sys-spacing-padding-md);
   --modal-width: min(90vw, 40rem);
-  --modal-bg: #fff;
+  --modal-bg: var(--comp-card-background-color);
   --modal-border: #ddd;
   --modal-backdrop: rgb(0 0 0 / 0.6);
-  --modal-focus: 2px solid #000;
+  --modal-focus: var(--sys-focus-styling);
 }
 
 /* Achtergrond niet laten scrollen terwijl de modal open is */
@@ -21,6 +21,7 @@ html:has(dialog[open]) {
   border-radius: var(--modal-radius);
   background: var(--modal-bg);
   overflow: hidden;
+  box-shadow:var(--comp-card-shadow);
 }
 
 /* Layout alleen in de open-state, anders blijft de dialog altijd zichtbaar */
@@ -45,6 +46,7 @@ html:has(dialog[open]) {
 .modal__title {
   margin: 0;
   font-size: 1.25rem;
+  color: var(--ref-palette-neutral-100);
 }
 
 .modal__close {
