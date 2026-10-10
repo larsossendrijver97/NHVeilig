@@ -1,6 +1,25 @@
 (() => {
   const openers = new WeakMap();
 
+  // Maakt een <h2> van data-modal-title en zet die vooraan in de modal.
+  // Koppelt hem ook als naam van de dialog (aria-labelledby), tenzij die al een naam heeft.
+  const addTitle = (dialog, index) => {
+    const text = dialog.dataset.modalTitle;
+    if (!text || dialog.querySelector('.modal__title')) return;
+
+    const id = `${dialog.id || `modal-${index}`}-title`;
+    const h2 = document.createElement('h2');
+    h2.className = 'modal__title';
+    h2.id = id;
+    h2.textContent = text;
+
+    (dialog.querySelector('.modal__body') || dialog).prepend(h2);
+
+    if (!dialog.hasAttribute('aria-labelledby')) {
+      dialog.setAttribute('aria-labelledby', id);
+    }
+  };
+
   // Voegt een sluitknop toe aan de dialog, tenzij die er al is
   const addCloseButton = (dialog) => {
     if (dialog.querySelector(':scope > .modal__close')) return;
@@ -33,8 +52,9 @@
     dialog.showModal();
   };
 
-  // Dialogs voorbereiden: sluitknop, close-event en sluitknoppen koppelen
-  document.querySelectorAll('dialog[data-modal]').forEach((dialog) => {
+  // Dialogs voorbereiden: titel, sluitknop, close-event en sluitknoppen koppelen
+  document.querySelectorAll('dialog[data-modal]').forEach((dialog, index) => {
+    addTitle(dialog, index);
     addCloseButton(dialog);
 
     // Het close-event vuurt ook bij Escape af
