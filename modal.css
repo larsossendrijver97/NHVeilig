@@ -1,0 +1,79 @@
+:root {
+  --modal-radius: 12px;
+  --modal-pad: 1.5rem;
+  --modal-width: min(90vw, 40rem);
+  --modal-bg: #fff;
+  --modal-border: #ddd;
+  --modal-backdrop: rgb(0 0 0 / 0.6);
+  --modal-focus: 3px solid #1a56db;
+}
+
+/* Achtergrond niet laten scrollen terwijl de modal open is */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.modal {
+  inline-size: var(--modal-width);
+  max-block-size: 85vh;
+  padding: 0;
+  border: 0;
+  border-radius: var(--modal-radius);
+  background: var(--modal-bg);
+  overflow: hidden;
+}
+
+/* Layout alleen in de open-state, anders blijft de dialog altijd zichtbaar */
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal::backdrop {
+  background: var(--modal-backdrop);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: var(--modal-pad);
+  border-block-end: 1px solid var(--modal-border);
+}
+
+.modal__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.modal__close {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+.modal__close:hover {
+  background: #eee;
+}
+
+.modal__close:focus-visible {
+  outline: var(--modal-focus);
+  outline-offset: 2px;
+}
+
+.modal__body {
+  padding: var(--modal-pad);
+  overflow-y: auto;
+}
+
+.modal__body iframe {
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
