@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Modal voorbeeld</title>
 
-  
   <link rel="stylesheet" href="modal-pleio.css">
 
   <!-- Alleen voor deze testpagina -->
@@ -35,10 +34,10 @@
   </div>
 
   <!-- Modal 1: tekst, opent ook automatisch bij het eerste bezoek.
-       De sluitknop wordt door het script toegevoegd. -->
-  <dialog id="info-modal" class="modal" data-modal data-modal-auto aria-labelledby="info-modal-title">
+       Je schrijft alleen de body. Het script bouwt de header
+       (h2 uit data-modal-title links, sluitknop rechts). -->
+  <dialog id="info-modal" class="modal" data-modal data-modal-auto data-modal-title="Welkom">
     <div class="modal__body">
-      <h2 class="modal__title" id="info-modal-title">Welkom</h2>
       <p>Hier staat de tekst van de modal. Je ziet deze automatisch bij je eerste bezoek, daarna alleen nog via de knop.</p>
       <p><button type="button" class="btn" data-modal-close>Begrepen</button></p>
     </div>
@@ -46,9 +45,8 @@
 
   <!-- Modal 2: video. Vervang VIDEO_ID door een echt YouTube-ID.
        data-src zorgt dat de video pas laadt als de modal opent. -->
-  <dialog id="video-modal" class="modal" data-modal aria-labelledby="video-modal-title">
+  <dialog id="video-modal" class="modal" data-modal data-modal-title="Video">
     <div class="modal__body">
-      <h2 class="modal__title" id="video-modal-title">Video</h2>
       <iframe
         data-src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
         title="Beschrijving van de video"
