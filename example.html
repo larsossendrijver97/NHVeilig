@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modal voorbeeld</title>
+
+  
+  <link rel="stylesheet" href="modal-pleio.css">
+
+  <!-- Alleen voor deze testpagina -->
+  <style>
+    body { font-family: system-ui, sans-serif; line-height: 1.5; padding: 2rem; max-width: 50rem; margin-inline: auto; }
+    .btn { font: inherit; padding: 0.6rem 1.1rem; border: 2px solid currentColor; border-radius: 0.5rem; background: #fff; cursor: pointer; }
+    .btn:focus-visible { outline: 3px solid #1a56db; outline-offset: 2px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-block: 1.5rem; }
+    .test-tools { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #ddd; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+  <h1>Modal voorbeeld</h1>
+  <p>Deze pagina test de modal lokaal. De eerste modal opent automatisch bij je eerste bezoek en is daarna alleen via de knop te openen.</p>
+
+  <div class="actions">
+    <!-- Handmatig openen -->
+    <button type="button" class="btn" data-modal-open="info-modal" aria-haspopup="dialog">
+      Meer informatie
+    </button>
+
+    <!-- Opent alleen via een knop (geen data-modal-auto) -->
+    <button type="button" class="btn" data-modal-open="video-modal" aria-haspopup="dialog">
+      Bekijk de video
+    </button>
+  </div>
+
+  <!-- Modal 1: tekst, opent ook automatisch bij het eerste bezoek.
+       De sluitknop wordt door het script toegevoegd. -->
+  <dialog id="info-modal" class="modal" data-modal data-modal-auto aria-labelledby="info-modal-title">
+    <div class="modal__body">
+      <h2 class="modal__title" id="info-modal-title">Welkom</h2>
+      <p>Hier staat de tekst van de modal. Je ziet deze automatisch bij je eerste bezoek, daarna alleen nog via de knop.</p>
+      <p><button type="button" class="btn" data-modal-close>Begrepen</button></p>
+    </div>
+  </dialog>
+
+  <!-- Modal 2: video. Vervang VIDEO_ID door een echt YouTube-ID.
+       data-src zorgt dat de video pas laadt als de modal opent. -->
+  <dialog id="video-modal" class="modal" data-modal aria-labelledby="video-modal-title">
+    <div class="modal__body">
+      <h2 class="modal__title" id="video-modal-title">Video</h2>
+      <iframe
+        data-src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
+        title="Beschrijving van de video"
+        allow="fullscreen"
+      ></iframe>
+    </div>
+  </dialog>
+
+  <!-- Alleen voor testen: de eerste-bezoek-vlag wissen -->
+  <div class="test-tools">
+    <button type="button" class="btn" id="reset-flag">Reset "eerste bezoek"</button>
+    <span id="reset-msg" role="status"></span>
+  </div>
+
+  <!-- Het echte script, net als op de site -->
+  <script src="modalbutton.js" defer></script>
+
+  <!-- Testhulp (hoort niet op de site) -->
+  <script>
+    document.getElementById('reset-flag').addEventListener('click', () => {
+      localStorage.removeItem('modal-seen:info-modal');
+      document.getElementById('reset-msg').textContent = ' Gewist. Ververs de pagina.';
+    });
+  </script>
+
+</body>
+</html>
