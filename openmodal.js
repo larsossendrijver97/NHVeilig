@@ -53,12 +53,23 @@
     });
   };
 
-  const open = (dialog, opener = null) => {
-    if (dialog.open) return;
-    openers.set(dialog, opener);
-    setEmbeds(dialog, true);
-    dialog.showModal();
-  };
+const open = (dialog, opener = null) => {
+  if (dialog.open) return;
+  openers.set(dialog, opener);
+  setEmbeds(dialog, true);
+
+  // NIEUW: H3 automatisch programmatisch focusbaar maken
+  const heading = dialog.querySelector('.modal__body h3');
+
+  if (heading && !heading.hasAttribute('tabindex')) {
+    heading.setAttribute('tabindex', '-1');
+  }
+
+  dialog.showModal();
+
+  // NIEUW: initiële focus op de H3
+  heading?.focus();
+};
 
   // Dialogs voorbereiden: header, close-event en sluitknoppen koppelen
   document.querySelectorAll('dialog[data-modal]').forEach((dialog, index) => {
