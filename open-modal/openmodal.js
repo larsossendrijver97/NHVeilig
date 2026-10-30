@@ -92,8 +92,10 @@ const open = (dialog, opener = null) => {
     if (dialog) trigger.addEventListener('click', () => open(dialog, trigger));
   });
 
-  // Automatisch openen, één keer per bezoeker
-  document.querySelectorAll('dialog[data-modal][data-modal-auto]').forEach((dialog) => {
+ // Automatisch openen: standaard één keer per bezoeker,
+// met data-modal-always bij elk paginabezoek
+document.querySelectorAll('dialog[data-modal][data-modal-auto]').forEach((dialog) => {
+  if (!dialog.hasAttribute('data-modal-always')) {
     const key = `modal-seen:${dialog.dataset.modalAuto || dialog.id}`;
     try {
       if (localStorage.getItem(key)) {
@@ -105,9 +107,11 @@ const open = (dialog, opener = null) => {
       console.log('modal auto: niet geopend, localStorage niet beschikbaar');
       return;
     }
-    open(dialog);
-    console.log(`modal auto: geopend (${dialog.id})`);
-  });
+  }
+
+  open(dialog);
+  console.log(`modal auto: geopend (${dialog.id})`);
+});
 
   console.log(
     'modal ready',
