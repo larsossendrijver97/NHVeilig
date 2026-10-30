@@ -5,7 +5,7 @@ Een toegankelijke modal op basis van het native `<dialog>`-element. Alles wordt 
 ## Wat het doet
 
 - Bouwt automatisch een header met titel en sluitknop.
-- Opent via een knop, of automatisch bij het laden van de pagina (één keer per bezoeker).
+- Opent via een knop, of automatisch bij het laden van de pagina (standaard één keer per bezoeker, optioneel bij elk paginabezoek).
 - Laadt iframes pas wanneer de modal opent en leegt ze bij sluiten.
 - Regelt de focus: bij openen naar de koptekst, bij sluiten terug naar de knop.
 
@@ -31,7 +31,8 @@ Een toegankelijke modal op basis van het native `<dialog>`-element. Alles wordt 
 | `data-modal` | Ja | n.v.t. | Markeert de `<dialog>` als modal. Zonder dit attribuut wordt het element genegeerd. |
 | `data-modal-title="Tekst"` | Nee | geen titel | Maakt bovenaan een `<h2 class="modal__title">` met deze tekst. De titel wordt via `aria-labelledby` de naam van de dialog. Is `aria-labelledby` al aanwezig, dan blijft die ongemoeid. |
 | `data-modal-close-label="Tekst"` | Nee | `Sluiten` | Toegankelijke naam (`aria-label`) van de sluitknop. Handig voor andere talen. |
-| `data-modal-auto` of `data-modal-auto="sleutel"` | Nee | uit | Opent de modal automatisch bij het laden van de pagina, één keer per bezoeker. Zie [Automatisch openen](#automatisch-openen). |
+| `data-modal-auto` of `data-modal-auto="sleutel"` | Nee | uit | Opent de modal automatisch bij het laden van de pagina, standaard één keer per bezoeker. Zie [Automatisch openen](#automatisch-openen). |
+| `data-modal-always` | Nee | uit | Werkt samen met `data-modal-auto`. De modal opent bij elk paginabezoek, ook als de bezoeker hem al eerder zag. Er wordt niets in `localStorage` opgeslagen. Zonder `data-modal-auto` heeft dit attribuut geen effect. |
 
 ### Op een knop of link
 
@@ -52,7 +53,11 @@ Een toegankelijke modal op basis van het native `<dialog>`-element. Alles wordt 
 
 ## Automatisch openen
 
-Met `data-modal-auto` opent de modal vanzelf, maar slechts één keer per bezoeker. Dat wordt onthouden in `localStorage` onder de sleutel `modal-seen:<sleutel>`.
+Met `data-modal-auto` opent de modal vanzelf bij het laden van de pagina. Er zijn twee modi.
+
+### Eén keer per bezoeker (standaard)
+
+De modal opent één keer. Dat wordt onthouden in `localStorage` onder de sleutel `modal-seen:<sleutel>`.
 
 ```html
 <!-- Sleutel = id van de dialog ("welkom") -->
@@ -67,6 +72,18 @@ Met `data-modal-auto` opent de modal vanzelf, maar slechts één keer per bezoek
 - **Gebruik altijd een `id` of een waarde.** Zonder beide is de sleutel `modal-seen:undefined` en delen meerdere dialogs dezelfde sleutel.
 - **Moment van opslaan:** de sleutel wordt opgeslagen vóór het openen. Een bezoeker die de pagina direct wegklikt, telt dus al als "gezien".
 - **Zonder `localStorage`** (bijvoorbeeld geblokkeerd in de browser) opent de modal niet.
+
+### Bij elk paginabezoek
+
+Voeg `data-modal-always` toe en de modal opent bij elk bezoek aan de pagina.
+
+```html
+<dialog id="welkom" data-modal data-modal-auto data-modal-always>
+```
+
+- Er wordt niets opgeslagen, dus een sleutel of waarde is niet nodig.
+- Werkt ook als `localStorage` geblokkeerd is.
+- Dit kan voor bezoekers snel irritant worden, vooral op pagina's die ze vaak herhalen. Gebruik het alleen voor meldingen die echt bij elk bezoek getoond moeten worden.
 
 ## Automatisch gedrag
 
