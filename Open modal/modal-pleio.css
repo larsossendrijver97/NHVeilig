@@ -1,1 +1,96 @@
+:root {
+  --modal-radius: var(--ref-shape-corner-xl);
+  --modal-pad: var(--sys-spacing-padding-md);
+  --modal-width: min(90vw, 40rem);
+  --modal-bg: var(--comp-card-background-color);
+  --modal-border: #ddd;
+  --modal-backdrop: rgb(0 0 0 / 0.6);
+  --modal-focus: var(--sys-focus-styling);
+}
 
+/* Achtergrond niet laten scrollen terwijl de modal open is */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.modal {
+  inline-size: var(--modal-width);
+  max-block-size: 85dvh;
+  overflow: hidden; 
+  padding: 0;
+  border: 0;
+  border-radius: var(--modal-radius);
+  background: var(--modal-bg);
+  overflow: hidden;
+  box-shadow:var(--comp-card-shadow);
+  font-size:var(--ref-font-size-normal);
+}
+
+/* Layout alleen in de open-state, anders blijft de dialog altijd zichtbaar */
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal::backdrop {
+  background: var(--modal-backdrop);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: var(--modal-pad);
+  border-block-end: 1px solid var(--modal-border);
+}
+
+.modal__title {
+  margin: 0;
+  font-size: var(--ref-font-size-large);
+  var(--ref-palette-primary-main);
+}
+
+.modal__close {
+  display: inline-flex;
+  align-items:center;
+  justify-content:center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  font-size: 1.75rem;
+  line-height: 1;
+  border: solid 1px #f5f5f5;
+  border-radius: var(--ref-shape-corner-md);
+  background: transparent;
+  cursor: pointer;
+  transition:0.3s ease;
+  color:var(--ref-palette-secondary-main);
+}
+
+.modal__close:hover {
+   background: var(--ref-palette-secondary-main);
+   color:#fff;
+   border-radius: var(--ref-shape-corner-md);
+}
+
+.modal__close:focus-visible {
+  outline: var(--modal-focus);
+  outline-offset: 2px;
+}
+
+.modal__body {
+  gap: var(--ref-size-6);
+  display: flex;
+  flex-direction:column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding: var(--modal-pad);
+  overscroll-behavior: contain;
+  overflow-y: auto;
+}
+
+.modal__body iframe {
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}
