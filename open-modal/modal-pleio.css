@@ -26,6 +26,10 @@ html:has(dialog[open]) {
   font-size:var(--ref-font-size-normal);
 }
 
+[data-modal-open]{
+z-index:999;
+}
+
 /* Layout alleen in de open-state, anders blijft de dialog altijd zichtbaar */
 .modal[open] {
   display: flex;
