@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v1.0.0
+ * Recent Communities v1.0.1 (eenvoudige variant)
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -8,7 +8,6 @@
 /**
  * Recent bezochte communities — voor Pleio-platforms
  *
- * Doet twee dingen:
  * 1. Tracker: onthoudt per ingelogde gebruiker welke community-pagina's
  *    (/groups/view/<guid>/...) hij bezoekt, in localStorage.
  * 2. Renderer: vult elk element met [data-recent-communities] met die lijst.
@@ -17,8 +16,8 @@
  *    Namen, iconen en links komen live uit de GraphQL-API, zodat ze actueel zijn
  *    en communities waar de gebruiker geen toegang meer toe heeft wegvallen.
  *
- * Laad dit script op elke pagina (bijv. in het footer-HTML-blok), anders
- * worden bezoeken die niet via de homepage beginnen niet geteld.
+ * Alle styling zit in dit script (element.style), los van het platform.
+ * Laad het script op elke pagina (bijv. in het footer-HTML-blok).
  */
 (() => {
   'use strict';
@@ -31,7 +30,29 @@
   const DEBUG = true; // zet op false als het live staat
   const GROUP_PATH = /^\/groups\/view\/([0-9a-f-]{36})(?:\/|$)/i;
 
+  const STYLES = {
+    container: { background: '#fff', borderRadius: '8px', padding: '32px' },
+    title: { margin: '0 0 24px' },
+    list: { listStyle: 'none', margin: '0', padding: '0', display: 'grid', gap: '12px' },
+    link: { display: 'flex', alignItems: 'center', gap: '16px', color: 'inherit', textDecoration: 'none' },
+    avatar: {
+      flex: 'none',
+      width: '48px',
+      height: '48px',
+      borderRadius: '50%',
+      backgroundColor: '#f1f1f1',
+      backgroundPosition: 'center',
+      backgroundSize: 'cover',
+      backgroundRepeat: 'no-repeat',
+      display: 'grid',
+      placeItems: 'center',
+      fontWeight: '700',
+    },
+    empty: { margin: '0' },
+  };
+
   const log = (...args) => DEBUG && console.log('[recent-communities]', ...args);
+  const applyStyle = (el, style) => el && Object.assign(el.style, style);
 
   // --- Opslag (per gebruiker, zodat een gedeelde pc geen lijsten mengt) ---
 
@@ -78,8 +99,7 @@
     if (!match) return;
 
     const guid = match[1].toLowerCase();
-    const list = [guid, ...read().filter((g) => g !== guid)].slice(0, MAX_ITEMS);
-    write(list);
+    write([guid, ...read().filter((g) => g !== guid)].slice(0, MAX_ITEMS));
     log('bezoek opgeslagen', guid);
   };
 
@@ -119,25 +139,34 @@
     return guids.map((_, i) => data?.[`g${i}`]).filter((group) => group?.name);
   };
 
+  // :hover en :focus-visible kunnen niet inline, dus via events.
+  const underlineOnInteraction = (link, name) => {
+    const set = (on) => { name.style.textDecoration = on ? 'underline' : 'none'; };
+    link.addEventListener('mouseenter', () => set(true));
+    link.addEventListener('mouseleave', () => set(link.matches(':focus-visible')));
+    link.addEventListener('focus', () => set(link.matches(':focus-visible')));
+    link.addEventListener('blur', () => set(link.matches(':hover')));
+  };
+
   const renderItem = (group) => {
     const li = document.createElement('li');
     const a = document.createElement('a');
-    a.className = 'recent-communities__link';
     a.href = group.url;
+    applyStyle(a, STYLES.link);
 
     const avatar = document.createElement('span');
-    avatar.className = 'recent-communities__avatar';
     avatar.setAttribute('aria-hidden', 'true');
+    applyStyle(avatar, STYLES.avatar);
     if (group.icon?.download) {
-      avatar.style.backgroundImage = `url("${group.icon.download}?size=48")`;
+      avatar.style.backgroundImage = `url("${group.icon.download.replace(/"/g, '%22')}?size=96")`;
     } else {
       avatar.textContent = group.name.trim().charAt(0).toUpperCase();
     }
 
     const name = document.createElement('span');
-    name.className = 'recent-communities__name';
     name.textContent = group.name.trim();
 
+    underlineOnInteraction(a, name);
     a.append(avatar, name);
     li.append(a);
     return li;
@@ -147,6 +176,11 @@
     container.dataset.recentCommunitiesReady = '';
     const list = container.querySelector('[data-recent-communities-list]') || container;
     const empty = container.querySelector('[data-recent-communities-empty]');
+
+    applyStyle(container, STYLES.container);
+    applyStyle(container.querySelector('h2, h3'), STYLES.title);
+    applyStyle(list, STYLES.list);
+    applyStyle(empty, STYLES.empty);
 
     const guids = read();
     let groups = [];
