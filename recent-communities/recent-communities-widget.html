@@ -10,15 +10,15 @@
      data-recent-communities-hide-empty          = verbergen zolang de lijst leeg is
                                                    (beheerders zien het blok altijd) -->
 
-<!-- Figma-variant: scrollend met verloop -->
-<div data-recent-communities data-recent-communities-variant="detailed" data-recent-communities-action="remove" data-recent-communities-max-height="448" data-recent-communities-overflow="fade" data-recent-communities-hide-empty>
-  <h3>Jouw recente communities</h3>
-  <ul data-recent-communities-list></ul>
-</div>
-
 <!-- Eenvoudige variant -->
 <div data-recent-communities data-recent-communities-limit="3" data-recent-communities-hide-empty>
   <h3>Jouw recente communities</h3>
   <ul data-recent-communities-list></ul>
   <button type="button" data-recent-communities-more hidden>Laad meer</button>
+</div>
+
+<!-- Verloop variant: scrollend met verloop -->
+<div data-recent-communities data-recent-communities-variant="detailed" data-recent-communities-action="remove" data-recent-communities-max-height="448" data-recent-communities-overflow="fade" data-recent-communities-hide-empty>
+  <h3>Jouw recente communities</h3>
+  <ul data-recent-communities-list></ul>
 </div>
