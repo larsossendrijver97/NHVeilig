@@ -1,16 +1,18 @@
 <!-- Vervangt de groepenwidget "Jouw recente communities" op /home-ingelogd -->
 
 <!-- Variant A: blok verbergen zolang er geen recente communities zijn -->
-<div class="recent-communities" data-recent-communities data-recent-communities-hide-empty hidden>
-  <h3 class="recent-communities__title">Jouw recente communities</h3>
-  <ul class="recent-communities__list" data-recent-communities-list></ul>
+<div data-recent-communities data-recent-communities-limit="3" data-recent-communities-hide-empty hidden>
+  <h3>Jouw recente communities</h3>
+  <ul data-recent-communities-list></ul>
+  <button type="button" data-recent-communities-more hidden>Laad meer</button>
 </div>
 
 <!-- Variant B: blok altijd tonen, met een tekst als de lijst leeg is -->
-<div class="recent-communities" data-recent-communities>
-  <h3 class="recent-communities__title">Jouw recente communities</h3>
-  <ul class="recent-communities__list" data-recent-communities-list></ul>
-  <p class="recent-communities__empty" data-recent-communities-empty>
+<div data-recent-communities data-recent-communities-limit="3">
+  <h3>Jouw recente communities</h3>
+  <ul data-recent-communities-list></ul>
+  <button type="button" data-recent-communities-more hidden>Laad meer</button>
+  <p data-recent-communities-empty>
     Je hebt nog geen communities bezocht.
     <a href="/groups/mine">Bekijk je communities</a>
   </p>
