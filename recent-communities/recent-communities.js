@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.5.0
+ * Recent Communities v2.8.0
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -17,27 +17,40 @@
  *    communities waar de gebruiker geen toegang meer toe heeft vallen weg.
  *
  * Instellingen in de HTML (op het element met data-recent-communities):
- *   data-recent-communities-variant="detailed"  Figma-ontwerp: ledenaantal,
- *                                       status-iconen en vastpinnen. Zonder dit
- *                                       attribuut (of "default"): eenvoudige lijst.
- *   data-recent-communities-action="remove"  knop per community (alleen bij
- *                                       "detailed"): "remove" = kruisje om uit de
- *                                       lijst te halen, "pin" = vastpinnen bovenaan,
- *                                       weglaten of "none" = geen knop
- *   data-recent-communities-pin-mode="keep"  wat vastpinnen doet (bij action="pin"):
- *                                       "top" (standaard) = bovenaan blijven staan,
- *                                       "keep" = op volgorde van bezoek, maar valt
- *                                       nooit uit de lijst
+ *
+ *   WEERGAVE
+ *   data-recent-communities-variant="detailed"  Figma-ontwerp (ledenaantal,
+ *                                       status-iconen, knop). Weglaten of
+ *                                       "default" = eenvoudige lijst
  *   data-recent-communities-hide-status  slotje en oogje niet tonen
- *   data-recent-communities-limit="3"   aantal per keer; meer via de knop
- *                                       (zonder limiet: alles in één keer)
- *   data-recent-communities-max-height="448"  maximale hoogte (px, of elke
- *                                       CSS-lengte zoals "60vh"); de lijst scrolt
- *   data-recent-communities-overflow="fade"  rand onderaan laten vervagen zoals in
- *                                       Figma; "hard" (standaard) = strakke rand
+ *   data-recent-communities-limit="3"   aantal per keer + knop "Laad meer"
+ *                                       (weglaten = alles in één keer)
+ *   data-recent-communities-max-height="448"  maximale hoogte (px of CSS-lengte
+ *                                       zoals "60vh"); de lijst scrolt
+ *   data-recent-communities-overflow="fade"  onderkant vervaagt zoals in Figma;
+ *                                       "hard" (standaard) = strakke rand
  *   data-recent-communities-hide-empty  blok verbergen als de lijst leeg is
- *                                       (geen `hidden` erbij zetten: dan is het
- *                                       blok in de editor onbereikbaar)
+ *                                       (geen `hidden` erbij: dan is het blok in
+ *                                       de editor onbereikbaar)
+ *
+ *   KNOP PER COMMUNITY (alleen bij variant="detailed")
+ *   1. Opslag  data-recent-communities-storage
+ *        "local" (standaard)  alleen in deze browser
+ *        "favorite"           als Pleio-favoriet: per account op de server,
+ *                             op elk apparaat gelijk (alleen bij communities
+ *                             waar je lid van bent)
+ *   2. Gedrag  data-recent-communities-action
+ *        "remove"  uit deze lijst halen   (standaard bij storage="local")
+ *        "pin"     vastzetten             (standaard bij storage="favorite")
+ *        "none"    geen knop
+ *      data-recent-communities-pin-mode  (alleen bij action="pin")
+ *        "top" (standaard)  vastgezette communities staan bovenaan
+ *        "keep"             volgorde van bezoek, maar vallen nooit uit de lijst
+ *   3. Icoon   data-recent-communities-icon
+ *        "x"     kruisje    (standaard bij action="remove")
+ *        "star"  ster       (standaard bij action="pin" + storage="favorite")
+ *        "pin"   speldje    (standaard bij action="pin" + storage="local")
+ *
  * Optionele onderdelen binnen het blok:
  *   [data-recent-communities-list]   de <ul> die gevuld wordt
  *   [data-recent-communities-more]   knop om meer te tonen
@@ -161,7 +174,7 @@
 
   const STYLES = { default: STYLES_DEFAULT, detailed: STYLES_DETAILED };
 
-  // pinOff, lock en eyeOff komen uit het Figma-ontwerp; pin en pinned uit Lucide.
+  // pinOff, lock en eyeOff uit het Figma-ontwerp; ster en kruisje van Pleio; pin en pinned uit Lucide.
   const ICONS = {
     pinOff: {
       width: 24, height: 24,
@@ -175,6 +188,15 @@
     pinned: {
       width: 24, height: 24,
       body: '<g fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></g>',
+    },
+    // Ster: hetzelfde icoon als de favorietenknop van Pleio zelf.
+    star: {
+      width: 22, height: 22,
+      body: '<path fill="currentColor" d="M11.39 2.08a1 1 0 0 1 .531.531l1.788 4.231a1 1 0 0 0 .835.607l4.616.4a1 1 0 0 1 .569 1.753l-3.49 3.026a1 1 0 0 0-.32.98l1.04 4.498a1 1 0 0 1-1.49 1.082l-3.952-2.385a1 1 0 0 0-1.034 0l-3.952 2.385a1 1 0 0 1-1.49-1.082l1.04-4.497a1 1 0 0 0-.32-.981l-3.49-3.026A1 1 0 0 1 2.84 7.85l4.616-.4a1 1 0 0 0 .835-.608l1.788-4.231a1 1 0 0 1 1.31-.532M11 5.311l-.184.429L9.338 9.18l-3.718.331-.467.042.353.308 2.827 2.47-.84 3.643-.106.46.404-.244L11 14.255l3.209 1.96.405.248-.106-.463-.841-3.668 2.827-2.444.357-.309-.47-.042-3.72-.331-1.476-3.464z"/>',
+    },
+    starFilled: {
+      width: 22, height: 22,
+      body: '<path fill="currentColor" d="m11.004 2.77.916 2.15.184.43 1.241 2.913 3.124.278.47.042 2.35.21-1.785 1.542-.357.31-2.373 2.049.708 3.083.636 2.778-2.026-1.238-.406-.248-2.692-1.644-2.686 1.621-.405.244-2.021 1.22.53-2.301.107-.46.704-3.06-2.375-2.075-.353-.308-1.763-1.542 2.333-.208.466-.041 3.123-.278 1.243-2.89.185-.43z"/><path fill="currentColor" d="M11.39 2.08a1 1 0 0 1 .531.531l1.788 4.231a1 1 0 0 0 .835.607l4.616.4a1 1 0 0 1 .569 1.753l-3.49 3.026a1 1 0 0 0-.32.98l1.04 4.498a1 1 0 0 1-1.49 1.082l-3.952-2.385a1 1 0 0 0-1.034 0l-3.952 2.385a1 1 0 0 1-1.49-1.082l1.04-4.497a1 1 0 0 0-.32-.981l-3.49-3.026A1 1 0 0 1 2.84 7.85l4.616-.4a1 1 0 0 0 .835-.608l1.788-4.231a1 1 0 0 1 1.31-.532"/>',
     },
     // Kruisje: hetzelfde icoon als de sluitknoppen van Pleio zelf.
     remove: {
@@ -202,10 +224,18 @@
   };
 
   // --- Opslag (per gebruiker) ---
+  // Elke account heeft een eigen lijst (sleutel = hash van het account), dus een
+  // andere gebruiker op hetzelfde apparaat ziet nooit iemand anders' communities.
 
   const user = document.body?.dataset.authenticatedUser;
   if (!user) {
-    log('niet ingelogd, script doet niets');
+    // Niet ingelogd: het blok nooit tonen, ook niet als het later verschijnt.
+    const hideAll = () => document
+      .querySelectorAll('[data-recent-communities]')
+      .forEach((block) => setVisible(block, false, 'block'));
+    new MutationObserver(hideAll).observe(document.body, { childList: true, subtree: true });
+    hideAll();
+    log('niet ingelogd, blok verborgen');
     return;
   }
 
@@ -282,25 +312,49 @@
 
   // --- 2. Renderer ---
 
-  const fetchData = async (guids) => {
-    // Eén query: per community een alias (geen toegang geeft null) plus of de
-    // gebruiker beheerder is.
-    const fields = guids
-      .map((g, i) => `g${i}: entity(guid: "${g}") { guid ... on Group { name url memberCount isMembershipOnRequest isClosed icon { download } } }`)
-      .join('\n');
-
+  // GraphQL-aanroep zoals Pleio die zelf doet (CSRF-cookie als header mee).
+  const gql = async (query, variables) => {
+    const token = document.cookie.match(/(?:^|;\s*)CSRF_TOKEN=([^;]+)/)?.[1];
     const response = await fetch('/graphql', {
       method: 'POST',
       credentials: 'same-origin',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: `query RecentCommunities {\nviewer { guid isAdmin }\n${fields}\n}` }),
+      headers: { 'Content-Type': 'application/json', ...(token && { 'X-CSRF-Token': token }) },
+      body: JSON.stringify({ query, variables }),
     });
-    const { data } = await response.json();
+    const result = await response.json();
+    // Losse fouten (bijv. één community zonder toegang) mogen; zonder data niet.
+    if (!result.data) throw new Error(result.errors?.map((e) => e.message).join(' / ') || 'Geen data');
+    if (result.errors?.length) log('GraphQL-meldingen', result.errors);
+    return result.data;
+  };
+
+  const GROUP_FIELDS = 'guid name url memberCount isMembershipOnRequest isClosed membership isFavorite icon { download }';
+
+  const fetchData = async (guids, { withFavorites = false } = {}) => {
+    // Eén query: per community een alias (geen toegang geeft null), of de
+    // gebruiker beheerder is en eventueel zijn Pleio-favorieten.
+    const fields = guids
+      .map((g, i) => `g${i}: entity(guid: "${g}") { guid ... on Group { ${GROUP_FIELDS} } }`)
+      .join('\n');
+    const favorites = withFavorites
+      ? `favorites: groups(isFavorite: true, offset: 0, limit: 50) { edges { ${GROUP_FIELDS} } }`
+      : '';
+
+    const data = await gql(`query RecentCommunities {\nviewer { guid isAdmin }\n${favorites}\n${fields}\n}`);
 
     return {
       groups: guids.map((_, i) => data?.[`g${i}`]).filter((group) => group?.name),
+      favorites: (data?.favorites?.edges || []).filter((group) => group?.name),
       isAdmin: Boolean(data?.viewer?.isAdmin),
     };
+  };
+
+  const setFavorite = async (groupGuid, favorite) => {
+    const data = await gql(
+      'mutation UpdateMembershipFavorite($input: UpdateMembershipFavoriteInput!) { updateMembershipFavorite(input: $input) { success } }',
+      { input: { groupGuid, favorite } },
+    );
+    if (!data?.updateMembershipFavorite?.success) throw new Error('Pleio gaf geen bevestiging');
   };
 
   const icon = (name, label) => {
@@ -399,7 +453,7 @@
     el.addEventListener('click', hideTooltip);
   };
 
-  const renderDetailedItem = (group, { action, isPinned, onAction, showStatus }) => {
+  const renderDetailedItem = (group, { action, iconStyle, isPinned, onAction, showStatus }) => {
     const groupName = group.name.trim();
 
     const li = document.createElement('li');
@@ -433,24 +487,40 @@
       button.type = 'button';
       button.dataset.action = '';
       applyStyle(button, { ...STYLES_DETAILED.iconBox, cursor: 'pointer' });
+
+      // Per icoon: [normaal, actief, hover bij actief] en de tooltip-teksten.
+      const ICON_STATES = {
+        star: ['star', 'starFilled', 'starFilled'],
+        pin: ['pin', 'pinned', 'pinOff'],
+        x: ['remove', 'remove', 'remove'],
+      };
+      const PIN_LABELS = {
+        star: ['Toevoegen aan favorieten', 'Verwijderen uit favorieten'],
+        pin: ['Vastpinnen', 'Losmaken'],
+        x: ['Vastzetten', 'Losmaken'],
+      };
+      const [normal, active, activeHover] = ICON_STATES[iconStyle];
+
       if (action === 'pin') {
+        const label = PIN_LABELS[iconStyle][isPinned ? 1 : 0];
         button.setAttribute('aria-pressed', String(isPinned));
-        button.setAttribute('aria-label', `${groupName} vastpinnen`);
-        button.append(icon(isPinned ? 'pinned' : 'pin'));
+        button.setAttribute('aria-label', `${groupName}: ${PIN_LABELS[iconStyle][0].toLowerCase()}`);
+        button.append(icon(isPinned ? active : normal));
         if (isPinned) {
-          // Vastgepind: donker gevuld speldje; bij hover/focus het doorgestreepte
-          // speldje, zodat duidelijk is dat een klik losmaakt.
           button.style.color = COLOR.title;
-          const swap = (name) => () => button.replaceChildren(icon(name));
-          button.addEventListener('mouseenter', swap('pinOff'));
-          button.addEventListener('focus', swap('pinOff'));
-          button.addEventListener('mouseleave', swap('pinned'));
-          button.addEventListener('blur', swap('pinned'));
+          if (activeHover !== active) {
+            // Bij hover/focus het "losmaken"-icoon, zodat duidelijk is wat een klik doet.
+            const swap = (name) => () => button.replaceChildren(icon(name));
+            button.addEventListener('mouseenter', swap(activeHover));
+            button.addEventListener('focus', swap(activeHover));
+            button.addEventListener('mouseleave', swap(active));
+            button.addEventListener('blur', swap(active));
+          }
         }
-        withTooltip(button, isPinned ? 'Losmaken' : 'Vastpinnen');
+        withTooltip(button, label);
       } else {
         button.setAttribute('aria-label', `${groupName} uit deze lijst halen`);
-        button.append(icon('remove'));
+        button.append(icon(normal));
         withTooltip(button, 'Uit deze lijst halen');
       }
       button.addEventListener('click', () => onAction(group.guid));
@@ -472,6 +542,7 @@
       if (!show) continue;
       const box = document.createElement('span');
       box.tabIndex = 0;
+      box.dataset.status = '';
       applyStyle(box, STYLES_DETAILED.iconBox);
       box.append(icon(iconName, label));
       withTooltip(box, label);
@@ -492,7 +563,8 @@
     // zodat toetsenbord en schermlezers één duidelijke link per community hebben.
     li.style.cursor = 'pointer';
     li.addEventListener('click', (event) => {
-      if (event.target.closest('a, button')) return;
+      // Knoppen, links en de status-iconen (tooltip) openen de community niet.
+      if (event.target.closest('a, button, [data-status]')) return;
       if (event.metaKey || event.ctrlKey) window.open(name.href, '_blank');
       else name.click();
     });
@@ -566,15 +638,27 @@
     const containerDisplay = container.dataset.recentCommunitiesMaxHeight ? 'flex' : 'block';
 
     // Vastpinnen bestaat alleen in de uitgebreide variant.
-    const actionAttr = container.dataset.recentCommunitiesAction;
-    const action = variant === 'detailed' && ['pin', 'remove'].includes(actionAttr) ? actionAttr : 'none';
+    // Knop: opslag -> gedrag -> icoon, elk met een logische standaard.
+    const ds = container.dataset;
+    const storage = (ds.recentCommunitiesStorage || ds.recentCommunitiesPinStorage || '').startsWith('favorite')
+      ? 'favorite'
+      : 'local';
+    const action = variant !== 'detailed'
+      ? 'none'
+      : ['pin', 'remove', 'none'].includes(ds.recentCommunitiesAction)
+        ? ds.recentCommunitiesAction
+        : storage === 'favorite' ? 'pin' : 'remove';
+    const iconStyle = ['star', 'pin', 'x'].includes(ds.recentCommunitiesIcon)
+      ? ds.recentCommunitiesIcon
+      : action === 'remove' ? 'x' : storage === 'favorite' ? 'star' : 'pin';
     const showStatus = !('recentCommunitiesHideStatus' in container.dataset);
     // Vastgepinde communities staan alleen bovenaan als vastpinnen aan staat.
     const pinMode = container.dataset.recentCommunitiesPinMode === 'keep' ? 'keep' : 'top';
+    const useFavorites = action === 'pin' && storage === 'favorite';
     const recent = read(RECENT_KEY);
     let guids = recent;
-    if (action === 'pin' && pinMode === 'top') guids = orderedGuids();
-    if (action === 'pin' && pinMode === 'keep') {
+    if (action === 'pin' && !useFavorites && pinMode === 'top') guids = orderedGuids();
+    if (action === 'pin' && !useFavorites && pinMode === 'keep') {
       guids = [...recent, ...read(PINNED_KEY).filter((g) => !recent.includes(g))];
     }
     const hideEmpty = 'recentCommunitiesHideEmpty' in container.dataset;
@@ -584,11 +668,15 @@
     // verbergen, zodat er geen leeg blok knippert. Het blok staat dus níet op
     // `hidden` in de HTML, zodat het in de editor (waar dit script niet draait)
     // gewoon zichtbaar en bereikbaar blijft.
-    if (hideEmpty && guids.length === 0 && !hasEditButton) setVisible(container, false, containerDisplay);
+    // (Met favorieten kan de lijst ook zonder bezoeken gevuld zijn.)
+    if (hideEmpty && guids.length === 0 && !useFavorites && !hasEditButton) {
+      setVisible(container, false, containerDisplay);
+    }
     let groups;
+    let favorites;
     let isAdmin;
     try {
-      ({ groups, isAdmin } = await fetchData(guids));
+      ({ groups, favorites, isAdmin } = await fetchData(guids, { withFavorites: useFavorites }));
     } catch (error) {
       console.warn('[recent-communities] ophalen mislukt', error);
       return;
@@ -601,10 +689,27 @@
       write(PINNED_KEY, read(PINNED_KEY).filter((g) => available.includes(g)));
     }
 
-    const pinned = read(PINNED_KEY);
-    const onAction = (guid) => {
+    // Favorieten (van de server) samenvoegen met de recente bezoeken.
+    if (useFavorites) {
+      const favoriteGuids = favorites.map((g) => g.guid);
+      const notFavorite = groups.filter((g) => !favoriteGuids.includes(g.guid));
+      const recentGuids = groups.map((g) => g.guid);
+      groups = pinMode === 'top'
+        ? [...favorites, ...notFavorite]
+        : [...groups, ...favorites.filter((g) => !recentGuids.includes(g.guid))];
+    }
+
+    const pinned = useFavorites ? groups.filter((g) => g.isFavorite).map((g) => g.guid) : read(PINNED_KEY);
+    const onAction = async (guid) => {
       const index = groups.findIndex((g) => g.guid === guid);
-      if (action === 'pin') {
+      if (action === 'pin' && useFavorites) {
+        try {
+          await setFavorite(guid, !pinned.includes(guid));
+        } catch (error) {
+          console.warn('[recent-communities] favoriet opslaan mislukt', error);
+        }
+        render(container, { focusAction: { guid } });
+      } else if (action === 'pin') {
         write(PINNED_KEY, pinned.includes(guid) ? pinned.filter((g) => g !== guid) : [...pinned, guid]);
         render(container, { focusAction: { guid } });
       } else {
@@ -616,7 +721,14 @@
 
     const items = groups.map((group) =>
       variant === 'detailed'
-        ? renderDetailedItem(group, { action, isPinned: pinned.includes(group.guid), onAction, showStatus })
+        ? renderDetailedItem(group, {
+          // Pleio-favorieten bestaan alleen voor communities waar je lid van bent.
+          action: useFavorites && group.membership !== 'joined' ? 'none' : action,
+          iconStyle,
+          isPinned: pinned.includes(group.guid),
+          onAction,
+          showStatus,
+        })
         : renderDefaultItem(group));
 
     // Bij opnieuw renderen evenveel tonen als de gebruiker al had opengeklapt.
