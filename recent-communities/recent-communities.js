@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.12.1
+ * Recent Communities v2.12.3
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -617,7 +617,16 @@
     });
     applyStyle(container.querySelector('h2, h3'), { flex: 'none' });
     applyStyle(more, { flex: 'none' });
-    applyStyle(list, { flex: '1 1 auto', minHeight: '0', overflowY: 'auto', overscrollBehavior: 'contain' });
+    // Bij een vaste hoogte mogen de rijen niet uitrekken: rijen zo hoog als hun
+    // inhoud (gridAutoRows) en bovenaan in de lijst (alignContent).
+    applyStyle(list, {
+      flex: '1 1 auto',
+      minHeight: '0',
+      overflowY: 'auto',
+      overscrollBehavior: 'contain',
+      alignContent: 'start',
+      gridAutoRows: 'max-content',
+    });
 
     if (container.dataset.recentCommunitiesOverflow !== 'fade') return () => {};
     if (fadeUpdaters.has(container)) return fadeUpdaters.get(container);
