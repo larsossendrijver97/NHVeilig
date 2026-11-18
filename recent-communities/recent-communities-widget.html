@@ -1,19 +1,20 @@
-<!-- Vervangt de groepenwidget "Jouw recente communities" op /home-ingelogd -->
+<!-- Homepage-blok: kies één variant.
+     data-recent-communities-variant="detailed"  = Figma-ontwerp (ledenaantal, iconen, vastpinnen)
+     weglaten of "default"                         = eenvoudige lijst
+     data-recent-communities-limit="3"           = 3 per keer + "Laad meer" (weglaten = alles tonen)
+     data-recent-communities-hide-empty hidden   = verbergen zolang de lijst leeg is
+                                                   (beheerders zien het blok altijd) -->
 
-<!-- Variant A: blok verbergen zolang er geen recente communities zijn -->
+<!-- Eenvoudige variant -->
 <div data-recent-communities data-recent-communities-limit="3" data-recent-communities-hide-empty hidden>
   <h3>Jouw recente communities</h3>
   <ul data-recent-communities-list></ul>
   <button type="button" data-recent-communities-more hidden>Laad meer</button>
 </div>
 
-<!-- Variant B: blok altijd tonen, met een tekst als de lijst leeg is -->
-<div data-recent-communities data-recent-communities-limit="3">
+<!-- Alternatief ontwerp -->
+<div data-recent-communities data-recent-communities-variant="detailed" data-recent-communities-limit="3" data-recent-communities-hide-empty hidden>
   <h3>Jouw recente communities</h3>
   <ul data-recent-communities-list></ul>
   <button type="button" data-recent-communities-more hidden>Laad meer</button>
-  <p data-recent-communities-empty>
-    Je hebt nog geen communities bezocht.
-    <a href="/groups/mine">Bekijk je communities</a>
-  </p>
 </div>
