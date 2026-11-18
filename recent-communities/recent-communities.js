@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.0.0
+ * Recent Communities v2.1.0
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -22,6 +22,10 @@
  *                                       attribuut (of "default"): eenvoudige lijst.
  *   data-recent-communities-limit="3"   aantal per keer; meer via de knop
  *                                       (zonder limiet: alles in één keer)
+ *   data-recent-communities-max-height="448"  maximale hoogte (px, of elke
+ *                                       CSS-lengte zoals "60vh"); de lijst scrolt
+ *   data-recent-communities-overflow="fade"  rand onderaan laten vervagen zoals in
+ *                                       Figma; "hard" (standaard) = strakke rand
  *   data-recent-communities-hide-empty  blok verbergen als de lijst leeg is
  *                                       (zet er ook `hidden` op tegen knipperen)
  * Optionele onderdelen binnen het blok:
@@ -42,6 +46,7 @@
 
   const STORAGE_PREFIX = 'recent-communities'; // per project aanpasbaar
   const MAX_ITEMS = 8; // zoveel recente bezoeken worden onthouden
+  const FADE_HEIGHT = 44; // px, hoogte van het verloop (uit Figma)
   const DEBUG = true; // op false zetten als het live staat
   const GROUP_PATH = /^\/groups\/view\/([0-9a-f-]{36})(?:\/|$)/i;
 
@@ -420,6 +425,37 @@
     return note;
   };
 
+  // Maximale hoogte: titel en knop blijven staan, de lijst scrolt.
+  // Bij "fade" vervaagt de onderkant van de kaart, tot je onderaan bent.
+  const fadeUpdaters = new WeakMap();
+  const setupOverflow = (container, list, more) => {
+    const maxHeight = container.dataset.recentCommunitiesMaxHeight;
+    if (!maxHeight) return () => {};
+
+    applyStyle(container, {
+      display: 'flex',
+      flexDirection: 'column',
+      maxHeight: /^\d+(\.\d+)?$/.test(maxHeight) ? `${maxHeight}px` : maxHeight,
+    });
+    applyStyle(container.querySelector('h2, h3'), { flex: 'none' });
+    applyStyle(more, { flex: 'none' });
+    applyStyle(list, { flex: '1 1 auto', minHeight: '0', overflowY: 'auto', overscrollBehavior: 'contain' });
+
+    if (container.dataset.recentCommunitiesOverflow !== 'fade') return () => {};
+    if (fadeUpdaters.has(container)) return fadeUpdaters.get(container);
+
+    const updateFade = () => {
+      const atEnd = list.scrollTop + list.clientHeight >= list.scrollHeight - 1;
+      const mask = atEnd ? 'none' : `linear-gradient(to bottom, #000 calc(100% - ${FADE_HEIGHT}px), transparent)`;
+      container.style.maskImage = mask;
+      container.style.webkitMaskImage = mask;
+    };
+    list.addEventListener('scroll', updateFade, { passive: true });
+    new ResizeObserver(updateFade).observe(list);
+    fadeUpdaters.set(container, updateFade);
+    return updateFade;
+  };
+
   const render = async (container, { focusPinOf } = {}) => {
     container.dataset.recentCommunitiesReady = '';
     const list = container.querySelector('[data-recent-communities-list]') || container;
@@ -434,6 +470,8 @@
     applyStyle(list, S.list);
     applyStyle(more, S.more);
     applyStyle(empty, S.empty);
+    const updateFade = setupOverflow(container, list, more);
+    const containerDisplay = container.dataset.recentCommunitiesMaxHeight ? 'flex' : 'block';
 
     // Vastpinnen bestaat alleen in de uitgebreide variant.
     const guids = variant === 'detailed' ? orderedGuids() : read(RECENT_KEY);
@@ -470,6 +508,7 @@
       items.forEach((item, i) => setVisible(item, i < shown, S.item.display));
       container.dataset.recentCommunitiesShown = shown;
       setVisible(more, shown < items.length, S.more.display);
+      updateFade();
     };
 
     list.replaceChildren(...items);
@@ -494,7 +533,7 @@
     setVisible(empty, isEmpty, 'block');
     if (hideEmpty) {
       setVisible(editorNote(container, S), isEmpty && canEdit, 'block');
-      setVisible(container, !isEmpty || canEdit, 'block');
+      setVisible(container, !isEmpty || canEdit, containerDisplay);
     }
     log(`${groups.length} communities, ${Math.min(shown, groups.length)} zichtbaar`);
   };
