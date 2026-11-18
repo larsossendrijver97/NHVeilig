@@ -2,6 +2,8 @@
      data-recent-communities-variant="detailed"  = Figma-ontwerp (ledenaantal, iconen, vastpinnen)
      weglaten of "default"                         = eenvoudige lijst
      data-recent-communities-limit="3"           = 3 per keer + "Laad meer" (weglaten = alles tonen)
+     data-recent-communities-max-height="448"    = maximale hoogte (px of CSS-lengte), lijst scrolt
+     data-recent-communities-overflow="fade"     = onderkant vervaagt zoals in Figma ("hard" = strakke rand)
      data-recent-communities-hide-empty hidden   = verbergen zolang de lijst leeg is
                                                    (beheerders zien het blok altijd) -->
 
@@ -12,9 +14,8 @@
   <button type="button" data-recent-communities-more hidden>Laad meer</button>
 </div>
 
-<!-- Alternatief ontwerp -->
-<div data-recent-communities data-recent-communities-variant="detailed" data-recent-communities-limit="3" data-recent-communities-hide-empty hidden>
+<!-- Alternatief ontwerp: scrollend met verloop -->
+<div data-recent-communities data-recent-communities-variant="detailed" data-recent-communities-max-height="448" data-recent-communities-overflow="fade" data-recent-communities-hide-empty hidden>
   <h3>Jouw recente communities</h3>
   <ul data-recent-communities-list></ul>
-  <button type="button" data-recent-communities-more hidden>Laad meer</button>
 </div>
