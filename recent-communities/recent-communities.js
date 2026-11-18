@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.11.0
+ * Recent Communities v2.12.1
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -29,12 +29,16 @@
  *   data-recent-communities-more-label="Toon meer"  tekst van die knop
  *   data-recent-communities-max-height="448"  maximale hoogte (px of CSS-lengte
  *                                       zoals "60vh"); de lijst scrolt
+ *   data-recent-communities-height="fixed"  kaart altijd op max-height, ook bij
+ *                                       een korte lijst ("auto" = meegroeien)
  *   data-recent-communities-overflow="fade"  onderkant vervaagt zoals in Figma;
  *                                       "hard" (standaard) = strakke rand
  *   data-recent-communities-fallback="memberships"  nog niets bezocht? Dan de
  *                                       communities tonen waar je lid van bent
  *   data-recent-communities-fallback-title="Jouw communities"  kop die dan
  *                                       getoond wordt (weglaten = kop blijft)
+ *   data-recent-communities-cleared-label="…"  melding als de laatste community
+ *                                       is weggeklikt (daarna verdwijnt het blok)
  *   data-recent-communities-hide-empty  blok verbergen als de lijst leeg is
  *                                       (geen `hidden` erbij: dan is het blok in
  *                                       de editor onbereikbaar)
@@ -151,6 +155,7 @@
       cursor: 'pointer',
     },
     empty: { margin: '0', padding: '0 16px 16px' },
+    cleared: { margin: '0', padding: '12px 16px 16px', color: COLOR.meta, fontSize: '14px', lineHeight: '20px' },
   };
 
   // Eenvoudige lijst (de oorspronkelijke opmaak).
@@ -175,6 +180,7 @@
     },
     more: { ...STYLES_DETAILED.more, margin: '16px auto 0' },
     empty: { margin: '0' },
+    cleared: { margin: '0', color: COLOR.meta, fontSize: '14px', lineHeight: '20px' },
   };
 
   const STYLES = { default: STYLES_DEFAULT, detailed: STYLES_DETAILED };
@@ -601,10 +607,13 @@
     const maxHeight = container.dataset.recentCommunitiesMaxHeight;
     if (!maxHeight) return () => {};
 
+    const size = /^\d+(\.\d+)?$/.test(maxHeight) ? `${maxHeight}px` : maxHeight;
     applyStyle(container, {
       display: 'flex',
       flexDirection: 'column',
-      maxHeight: /^\d+(\.\d+)?$/.test(maxHeight) ? `${maxHeight}px` : maxHeight,
+      maxHeight: size,
+      // "fixed": de kaart is altijd zo hoog, ook als de lijst korter is.
+      height: container.dataset.recentCommunitiesHeight === 'fixed' ? size : '',
     });
     applyStyle(container.querySelector('h2, h3'), { flex: 'none' });
     applyStyle(more, { flex: 'none' });
@@ -632,8 +641,43 @@
     return updateFade;
   };
 
-  const render = async (container, { focusAction } = {}) => {
+  // Melding nadat iemand de laatste community uit de lijst heeft gehaald.
+  const CLEARED_TIME = 5000; // ms zichtbaar voordat het blok verdwijnt
+  const showCleared = (container, list, S, { hide, display }) => {
+    const message = document.createElement('p');
+    message.dataset.recentCommunitiesCleared = '';
+    message.setAttribute('role', 'status');
+    message.tabIndex = -1;
+    message.textContent = container.dataset.recentCommunitiesClearedLabel
+      || 'Je hebt alle recente communities uit de lijst gehaald. Dit blok komt terug zodra je weer een community bezoekt.';
+    applyStyle(message, { ...S.cleared, outline: 'none' }); // focusdoel, geen knop
+    list.replaceChildren();
+    list.style.display = 'none'; // melding direct onder de titel
+    list.after(message);
+    setVisible(container, true, display);
+    message.focus(); // de knop is weg; focus naar de melding
+    if (!hide) return;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const fadeTime = reduceMotion ? 0 : 400;
+    setTimeout(() => {
+      // Intussen weer iets bezocht en opnieuw gevuld? Dan niet verbergen.
+      if (!message.isConnected || list.children.length) return;
+      container.style.transition = `opacity ${fadeTime}ms ease`;
+      container.style.opacity = '0';
+      setTimeout(() => {
+        setVisible(container, false, display);
+        container.style.transition = '';
+        container.style.opacity = '';
+        message.remove();
+      }, fadeTime);
+    }, CLEARED_TIME);
+  };
+
+  const render = async (container, { focusAction, cleared = false } = {}) => {
     container.dataset.recentCommunitiesReady = '';
+    container.querySelector('[data-recent-communities-cleared]')?.remove();
+    const listEl = container.querySelector('[data-recent-communities-list]');
+    if (listEl?.style.display === 'none') listEl.style.display = '';
     const list = container.querySelector('[data-recent-communities-list]') || container;
     const empty = container.querySelector('[data-recent-communities-empty]');
     const limit = Number(container.dataset.recentCommunitiesLimit) || Infinity;
@@ -693,7 +737,7 @@
     // voor iedereen verborgen, ook voor beheerders.
     // (Met favorieten kan de lijst ook zonder bezoeken gevuld zijn.)
     const fallback = ds.recentCommunitiesFallback === 'memberships';
-    if (hideEmpty && guids.length === 0 && !useFavorites && !fallback) {
+    if (hideEmpty && guids.length === 0 && !useFavorites && !fallback && !cleared) {
       setVisible(container, false, containerDisplay);
     }
     let groups;
@@ -758,7 +802,7 @@
       } else {
         write(RECENT_KEY, read(RECENT_KEY).filter((g) => g !== guid));
         write(PINNED_KEY, pinned.filter((g) => g !== guid));
-        render(container, { focusAction: { index } });
+        render(container, { focusAction: { index }, cleared: groups.length === 1 });
       }
     };
 
@@ -807,6 +851,10 @@
     }
 
     const isEmpty = groups.length === 0;
+    if (cleared && isEmpty) {
+      showCleared(container, list, S, { hide: hideEmpty, display: containerDisplay });
+      return;
+    }
     setVisible(empty, isEmpty, 'block');
     if (hideEmpty) setVisible(container, !isEmpty, containerDisplay);
     log(`${groups.length} communities, ${Math.min(shown, groups.length)} zichtbaar`);
