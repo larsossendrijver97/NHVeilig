@@ -100,3 +100,8 @@ z-index:999;
   aspect-ratio: 16 / 9;
   border: 0;
 }
+
+/* Potloodje van Pleio (alleen beheerders) rechtsonder: "Hulp nodig?" ernaast zetten */
+body:has([class*="AdminOverlay__Wrapper"]:not([class*="AdminOverlay__PositionLeft"])) .btn.help {
+  right: calc(20px + 56px + 12px); /* marge van de overlay + potloodje + tussenruimte */
+}
