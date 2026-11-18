@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v1.2.0
+ * Recent Communities v1.3.0 (Alternatief ontwerp)
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -111,6 +111,7 @@
       cursor: 'pointer',
     },
     empty: { margin: '0', padding: '0 16px 16px' },
+    note: { margin: '0', padding: '0 16px 16px', color: COLOR.meta, fontSize: '13.1px', lineHeight: '20px' },
   };
 
   // pinOff, lock en eyeOff komen uit het Figma-ontwerp; pin (vastgepind) uit Lucide.
@@ -218,8 +219,9 @@
 
   // --- 2. Renderer ---
 
-  const fetchGroups = async (guids) => {
-    // Eén query met een alias per community; geen toegang geeft null terug.
+  const fetchData = async (guids) => {
+    // Eén query: per community een alias (geen toegang geeft null) plus of de
+    // gebruiker beheerder is.
     const fields = guids
       .map((g, i) => `g${i}: entity(guid: "${g}") { guid ... on Group { name url memberCount isClosed isHidden icon { download } } }`)
       .join('\n');
@@ -228,11 +230,14 @@
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: `query RecentCommunities {\n${fields}\n}` }),
+      body: JSON.stringify({ query: `query RecentCommunities {\nviewer { guid isAdmin }\n${fields}\n}` }),
     });
     const { data } = await response.json();
 
-    return guids.map((_, i) => data?.[`g${i}`]).filter((group) => group?.name);
+    return {
+      groups: guids.map((_, i) => data?.[`g${i}`]).filter((group) => group?.name),
+      isAdmin: Boolean(data?.viewer?.isAdmin),
+    };
   };
 
   const icon = (name, label) => {
@@ -323,6 +328,20 @@
     return li;
   };
 
+  // Melding voor beheerders/redacteuren als het blok voor gebruikers verborgen is.
+  const editorNote = (container) => {
+    let note = container.querySelector('[data-recent-communities-note]');
+    if (!note) {
+      note = document.createElement('p');
+      note.dataset.recentCommunitiesNote = '';
+      note.textContent =
+        'Alleen zichtbaar voor beheerders: gebruikers zien dit blok pas als ze een community hebben bezocht.';
+      applyStyle(note, STYLES.note);
+      container.append(note);
+    }
+    return note;
+  };
+
   const render = async (container, { focusPinOf } = {}) => {
     container.dataset.recentCommunitiesReady = '';
     const list = container.querySelector('[data-recent-communities-list]') || container;
@@ -337,14 +356,13 @@
     applyStyle(empty, STYLES.empty);
 
     const guids = orderedGuids();
-    let groups = [];
-    if (guids.length) {
-      try {
-        groups = await fetchGroups(guids);
-      } catch (error) {
-        console.warn('[recent-communities] ophalen mislukt', error);
-        return;
-      }
+    let groups;
+    let isAdmin;
+    try {
+      ({ groups, isAdmin } = await fetchData(guids));
+    } catch (error) {
+      console.warn('[recent-communities] ophalen mislukt', error);
+      return;
     }
 
     // Communities zonder toegang meteen uit de opslag halen.
@@ -384,8 +402,16 @@
 
     if (focusPinOf) list.querySelector(`[data-guid="${focusPinOf}"] [data-pin]`)?.focus();
 
-    setVisible(empty, groups.length === 0, 'block');
-    if ('recentCommunitiesHideEmpty' in container.dataset) setVisible(container, groups.length > 0, 'block');
+    // Beheerders en redacteuren zien het blok altijd, ook als het leeg is,
+    // zodat het in de bewerkmodus niet verdwijnt.
+    const hideEmpty = 'recentCommunitiesHideEmpty' in container.dataset;
+    const canEdit = isAdmin || Boolean(document.querySelector('[aria-label^="Bewerkmodus"]'));
+    const isEmpty = groups.length === 0;
+    setVisible(empty, isEmpty, 'block');
+    if (hideEmpty) {
+      setVisible(editorNote(container), isEmpty && canEdit, 'block');
+      setVisible(container, !isEmpty || canEdit, 'block');
+    }
     log(`${groups.length} communities, ${Math.min(shown, groups.length)} zichtbaar`);
   };
 
