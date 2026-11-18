@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.9.1
+ * Recent Communities v2.10.0
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -147,7 +147,6 @@
       cursor: 'pointer',
     },
     empty: { margin: '0', padding: '0 16px 16px' },
-    note: { margin: '0', padding: '0 16px 16px', color: COLOR.meta, fontSize: '13.1px', lineHeight: '20px' },
   };
 
   // Eenvoudige lijst (de oorspronkelijke opmaak).
@@ -172,7 +171,6 @@
     },
     more: { ...STYLES_DETAILED.more, margin: '16px auto 0' },
     empty: { margin: '0' },
-    note: { margin: '0', color: COLOR.meta, fontSize: '13px', lineHeight: '20px' },
   };
 
   const STYLES = { default: STYLES_DEFAULT, detailed: STYLES_DETAILED };
@@ -334,8 +332,8 @@
   const GROUP_FIELDS = 'guid name url memberCount isMembershipOnRequest isClosed membership isFavorite icon { download }';
 
   const fetchData = async (guids, { withFavorites = false } = {}) => {
-    // Eén query: per community een alias (geen toegang geeft null), of de
-    // gebruiker beheerder is en eventueel zijn Pleio-favorieten.
+    // Eén query: per community een alias (geen toegang geeft null) en
+    // eventueel de Pleio-favorieten van de gebruiker.
     const fields = guids
       .map((g, i) => `g${i}: entity(guid: "${g}") { guid ... on Group { ${GROUP_FIELDS} } }`)
       .join('\n');
@@ -343,12 +341,11 @@
       ? `favorites: groups(isFavorite: true, offset: 0, limit: 50) { edges { ${GROUP_FIELDS} } }`
       : '';
 
-    const data = await gql(`query RecentCommunities {\nviewer { guid isAdmin }\n${favorites}\n${fields}\n}`);
+    const data = await gql(`query RecentCommunities {\n${favorites}\n${fields}\n}`);
 
     return {
       groups: guids.map((_, i) => data?.[`g${i}`]).filter((group) => group?.name),
       favorites: (data?.favorites?.edges || []).filter((group) => group?.name),
-      isAdmin: Boolean(data?.viewer?.isAdmin),
     };
   };
 
@@ -578,20 +575,6 @@
     return li;
   };
 
-  // Melding voor beheerders/redacteuren als het blok voor gebruikers verborgen is.
-  const editorNote = (container, S) => {
-    let note = container.querySelector('[data-recent-communities-note]');
-    if (!note) {
-      note = document.createElement('p');
-      note.dataset.recentCommunitiesNote = '';
-      note.textContent =
-        'Alleen zichtbaar voor beheerders: gebruikers zien dit blok pas als ze een community hebben bezocht.';
-      applyStyle(note, S.note);
-      container.append(note);
-    }
-    return note;
-  };
-
   // Maximale hoogte: titel en knop blijven staan, de lijst scrolt.
   // Bij "fade" vervaagt de onderkant van de kaart, tot je onderaan bent.
   const fadeUpdaters = new WeakMap();
@@ -611,11 +594,18 @@
     if (container.dataset.recentCommunitiesOverflow !== 'fade') return () => {};
     if (fadeUpdaters.has(container)) return fadeUpdaters.get(container);
 
+    const setMask = (el, mask) => {
+      el.style.maskImage = mask;
+      el.style.webkitMaskImage = mask;
+    };
     const updateFade = () => {
       const atEnd = list.scrollTop + list.clientHeight >= list.scrollHeight - 1;
       const mask = atEnd ? 'none' : `linear-gradient(to bottom, #000 calc(100% - ${FADE_HEIGHT}px), transparent)`;
-      container.style.maskImage = mask;
-      container.style.webkitMaskImage = mask;
+      // Staat de knop "Laad meer" er, dan vervaagt alleen de lijst (naar wit),
+      // zodat de knop leesbaar blijft. Anders vervaagt de hele kaart in de hero.
+      const buttonVisible = more && more.isConnected && !more.hidden;
+      setMask(buttonVisible ? list : container, mask);
+      setMask(buttonVisible ? container : list, 'none');
     };
     list.addEventListener('scroll', updateFade, { passive: true });
     new ResizeObserver(updateFade).observe(list);
@@ -676,21 +666,20 @@
       guids = [...recent, ...read(PINNED_KEY).filter((g) => !recent.includes(g))];
     }
     const hideEmpty = 'recentCommunitiesHideEmpty' in container.dataset;
-    const hasEditButton = Boolean(document.querySelector('[aria-label^="Bewerkmodus"]'));
 
     // Zonder opgeslagen bezoeken weten we nu al dat de lijst leeg is: meteen
     // verbergen, zodat er geen leeg blok knippert. Het blok staat dus níet op
     // `hidden` in de HTML, zodat het in de editor (waar dit script niet draait)
-    // gewoon zichtbaar en bereikbaar blijft.
+    // gewoon zichtbaar en bereikbaar blijft. Op de site zelf is het leeg blok
+    // voor iedereen verborgen, ook voor beheerders.
     // (Met favorieten kan de lijst ook zonder bezoeken gevuld zijn.)
-    if (hideEmpty && guids.length === 0 && !useFavorites && !hasEditButton) {
+    if (hideEmpty && guids.length === 0 && !useFavorites) {
       setVisible(container, false, containerDisplay);
     }
     let groups;
     let favorites;
-    let isAdmin;
     try {
-      ({ groups, favorites, isAdmin } = await fetchData(guids, { withFavorites: useFavorites }));
+      ({ groups, favorites } = await fetchData(guids, { withFavorites: useFavorites }));
     } catch (error) {
       console.warn('[recent-communities] ophalen mislukt', error);
       return;
@@ -774,15 +763,9 @@
       (next.querySelector('[data-action]') || next.querySelector('a'))?.focus();
     }
 
-    // Beheerders en redacteuren zien het blok altijd, ook als het leeg is,
-    // zodat het in de bewerkmodus niet verdwijnt.
-    const canEdit = isAdmin || hasEditButton;
     const isEmpty = groups.length === 0;
     setVisible(empty, isEmpty, 'block');
-    if (hideEmpty) {
-      setVisible(editorNote(container, S), isEmpty && canEdit, 'block');
-      setVisible(container, !isEmpty || canEdit, containerDisplay);
-    }
+    if (hideEmpty) setVisible(container, !isEmpty, containerDisplay);
     log(`${groups.length} communities, ${Math.min(shown, groups.length)} zichtbaar`);
   };
 
