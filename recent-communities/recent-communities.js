@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.9.0
+ * Recent Communities v2.9.1
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -86,8 +86,9 @@
   };
 
   const STYLES_DETAILED = {
-    // position + z-index: boven de absolute leader-afbeelding in dezelfde kolom.
-    container: { position: 'relative', zIndex: '1', background: COLOR.card, borderRadius: '4px', overflow: 'hidden' },
+    // position + z-index 0: boven de absolute leader-afbeelding in dezelfde kolom,
+    // maar onder elementen in blokken met z-index 1 (zoals de knop "Hulp nodig?").
+    container: { position: 'relative', zIndex: '0', background: COLOR.card, borderRadius: '4px', overflow: 'hidden' },
     title: { margin: '0', padding: '16px', color: COLOR.title, fontSize: '18px', lineHeight: '1', fontWeight: '700' },
     // Compacter dan Figma (14 / 16 / 8 px): items stonden live te ver uit elkaar.
     list: { listStyle: 'none', margin: '4px 0 0', padding: '0', display: 'grid', gap: '0' },
@@ -151,7 +152,7 @@
 
   // Eenvoudige lijst (de oorspronkelijke opmaak).
   const STYLES_DEFAULT = {
-    container: { position: 'relative', zIndex: '1', background: COLOR.card, borderRadius: '8px', padding: '32px' },
+    container: { position: 'relative', zIndex: '0', background: COLOR.card, borderRadius: '8px', padding: '32px' },
     title: { margin: '0 0 24px' },
     list: { listStyle: 'none', margin: '0', padding: '0', display: 'grid', gap: '12px' },
     item: { display: 'block' },
