@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.10.0
+ * Recent Communities v2.11.0
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -31,6 +31,10 @@
  *                                       zoals "60vh"); de lijst scrolt
  *   data-recent-communities-overflow="fade"  onderkant vervaagt zoals in Figma;
  *                                       "hard" (standaard) = strakke rand
+ *   data-recent-communities-fallback="memberships"  nog niets bezocht? Dan de
+ *                                       communities tonen waar je lid van bent
+ *   data-recent-communities-fallback-title="Jouw communities"  kop die dan
+ *                                       getoond wordt (weglaten = kop blijft)
  *   data-recent-communities-hide-empty  blok verbergen als de lijst leeg is
  *                                       (geen `hidden` erbij: dan is het blok in
  *                                       de editor onbereikbaar)
@@ -341,12 +345,27 @@
       ? `favorites: groups(isFavorite: true, offset: 0, limit: 50) { edges { ${GROUP_FIELDS} } }`
       : '';
 
+    // Niets te vragen (geen bezoeken, geen favorieten): geen lege query sturen.
+    if (!fields && !favorites) return { groups: [], favorites: [] };
+
     const data = await gql(`query RecentCommunities {\n${favorites}\n${fields}\n}`);
 
     return {
       groups: guids.map((_, i) => data?.[`g${i}`]).filter((group) => group?.name),
       favorites: (data?.favorites?.edges || []).filter((group) => group?.name),
     };
+  };
+
+  // Communities waar de gebruiker lid van is (zelfde vraag als Pleio zelf stelt).
+  const fetchMemberships = async () => {
+    const viewer = await gql('query RecentCommunitiesViewer { viewer { guid user { guid } } }');
+    const userGuid = viewer?.viewer?.user?.guid;
+    if (!userGuid) return [];
+    const data = await gql(
+      `query RecentCommunitiesMemberships($userGuid: String) { groups(userGuid: $userGuid, offset: 0, limit: ${MAX_ITEMS}) { edges { ${GROUP_FIELDS} } } }`,
+      { userGuid },
+    );
+    return (data?.groups?.edges || []).filter((group) => group?.name && group.membership === 'joined');
   };
 
   const setFavorite = async (groupGuid, favorite) => {
@@ -673,7 +692,8 @@
     // gewoon zichtbaar en bereikbaar blijft. Op de site zelf is het leeg blok
     // voor iedereen verborgen, ook voor beheerders.
     // (Met favorieten kan de lijst ook zonder bezoeken gevuld zijn.)
-    if (hideEmpty && guids.length === 0 && !useFavorites) {
+    const fallback = ds.recentCommunitiesFallback === 'memberships';
+    if (hideEmpty && guids.length === 0 && !useFavorites && !fallback) {
       setVisible(container, false, containerDisplay);
     }
     let groups;
@@ -702,6 +722,26 @@
         : [...groups, ...favorites.filter((g) => !recentGuids.includes(g.guid))];
     }
 
+    // Nog niets bezocht: eventueel de communities tonen waar je lid van bent.
+    let isFallback = false;
+    if (groups.length === 0 && fallback) {
+      try {
+        groups = await fetchMemberships();
+        isFallback = groups.length > 0;
+      } catch (error) {
+        console.warn('[recent-communities] lidmaatschappen ophalen mislukt', error);
+      }
+    }
+
+    // Titel: bij de lidmaatschappen eventueel een andere kop.
+    const titleEl = container.querySelector('h2, h3');
+    if (titleEl) {
+      titleEl.dataset.recentCommunitiesTitle ??= titleEl.textContent;
+      titleEl.textContent = isFallback && ds.recentCommunitiesFallbackTitle
+        ? ds.recentCommunitiesFallbackTitle
+        : titleEl.dataset.recentCommunitiesTitle;
+    }
+
     const pinned = useFavorites ? groups.filter((g) => g.isFavorite).map((g) => g.guid) : read(PINNED_KEY);
     const onAction = async (guid) => {
       const index = groups.findIndex((g) => g.guid === guid);
@@ -726,7 +766,10 @@
       variant === 'detailed'
         ? renderDetailedItem(group, {
           // Pleio-favorieten bestaan alleen voor communities waar je lid van bent.
-          action: useFavorites && group.membership !== 'joined' ? 'none' : action,
+          // Uit de lijst halen kan niet bij lidmaatschappen (die zijn niet bezocht).
+          action: (useFavorites && group.membership !== 'joined') || (isFallback && action === 'remove')
+            ? 'none'
+            : action,
           iconStyle,
           isPinned: pinned.includes(group.guid),
           onAction,
