@@ -12,6 +12,8 @@
  * 1. Tracker: onthoudt per ingelogde gebruiker welke community-pagina's
  *    (/groups/view/<guid>/...) hij bezoekt, in localStorage.
  * 2. Renderer: vult elk element met [data-recent-communities] met die lijst.
+ *    Met [data-recent-communities-hide-empty] verdwijnt het blok als de lijst
+ *    leeg is (zet er ook `hidden` op, dan knippert het niet tijdens het laden).
  *    Namen, iconen en links komen live uit de GraphQL-API, zodat ze actueel zijn
  *    en communities waar de gebruiker geen toegang meer toe heeft wegvallen.
  *
@@ -161,6 +163,7 @@
 
     list.replaceChildren(...groups.map(renderItem));
     if (empty) empty.hidden = groups.length > 0;
+    if ('recentCommunitiesHideEmpty' in container.dataset) container.hidden = groups.length === 0;
     log(`${groups.length} communities getoond`);
   };
 
