@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v1.3.1 (Alternatief ontwero)
+ * Recent Communities v1.3.2 (Alternatief ontwerp)
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -326,6 +326,19 @@
     content.append(header, info);
 
     li.append(avatarWrap, content);
+
+    // Hele item klikbaar (behalve het speldje); de naam blijft de echte link,
+    // zodat toetsenbord en schermlezers één duidelijke link per community hebben.
+    li.style.cursor = 'pointer';
+    li.addEventListener('click', (event) => {
+      if (event.target.closest('a, button')) return;
+      if (event.metaKey || event.ctrlKey) window.open(name.href, '_blank');
+      else name.click();
+    });
+    li.addEventListener('mouseenter', () => { name.style.textDecoration = 'underline'; });
+    li.addEventListener('mouseleave', () => {
+      if (!name.matches(':focus-visible')) name.style.textDecoration = 'none';
+    });
     return li;
   };
 
