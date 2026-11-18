@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.12.3
+ * Recent Communities v2.13.1
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -234,6 +234,21 @@
     el.style.display = visible ? display : 'none';
   };
 
+  const cssSize = (value) => (value && /^\d+(\.\d+)?$/.test(value) ? `${value}px` : value || '');
+
+  // Het blok zelf verbergen we onzichtbaar maar mét ruimte (visibility), zodat
+  // de achtergrond van de hero (absoluut in dezelfde kolom) niet wegvalt als de
+  // kolom anders leeg zou zijn, zoals op mobiel. Met een max-height houdt het
+  // verborgen blok die hoogte aan.
+  const setBlockVisible = (block, visible, display) => {
+    const maxHeight = cssSize(block.dataset.recentCommunitiesMaxHeight);
+    const fixed = block.dataset.recentCommunitiesHeight === 'fixed';
+    block.hidden = false;
+    block.style.display = display;
+    block.style.visibility = visible ? '' : 'hidden';
+    block.style.height = !visible || fixed ? maxHeight : '';
+  };
+
   // --- Opslag (per gebruiker) ---
   // Elke account heeft een eigen lijst (sleutel = hash van het account), dus een
   // andere gebruiker op hetzelfde apparaat ziet nooit iemand anders' communities.
@@ -243,7 +258,7 @@
     // Niet ingelogd: het blok nooit tonen, ook niet als het later verschijnt.
     const hideAll = () => document
       .querySelectorAll('[data-recent-communities]')
-      .forEach((block) => setVisible(block, false, 'block'));
+      .forEach((block) => setBlockVisible(block, false, 'block'));
     new MutationObserver(hideAll).observe(document.body, { childList: true, subtree: true });
     hideAll();
     log('niet ingelogd, blok verborgen');
@@ -389,7 +404,7 @@
     span.style.lineHeight = '0';
     span.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}" focusable="false" ${
       label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'
-    }>${label ? `<title>${label}</title>` : ''}${body}</svg>`;
+    }>${body}</svg>`; // geen <title>: anders toont de browser een tweede (grijze) tooltip
     return span;
   };
 
@@ -663,7 +678,7 @@
     list.replaceChildren();
     list.style.display = 'none'; // melding direct onder de titel
     list.after(message);
-    setVisible(container, true, display);
+    setBlockVisible(container, true, display);
     message.focus(); // de knop is weg; focus naar de melding
     if (!hide) return;
     const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -674,7 +689,7 @@
       container.style.transition = `opacity ${fadeTime}ms ease`;
       container.style.opacity = '0';
       setTimeout(() => {
-        setVisible(container, false, display);
+        setBlockVisible(container, false, display);
         container.style.transition = '';
         container.style.opacity = '';
         message.remove();
@@ -747,7 +762,7 @@
     // (Met favorieten kan de lijst ook zonder bezoeken gevuld zijn.)
     const fallback = ds.recentCommunitiesFallback === 'memberships';
     if (hideEmpty && guids.length === 0 && !useFavorites && !fallback && !cleared) {
-      setVisible(container, false, containerDisplay);
+      setBlockVisible(container, false, containerDisplay);
     }
     let groups;
     let favorites;
@@ -865,7 +880,7 @@
       return;
     }
     setVisible(empty, isEmpty, 'block');
-    if (hideEmpty) setVisible(container, !isEmpty, containerDisplay);
+    if (hideEmpty) setBlockVisible(container, !isEmpty, containerDisplay);
     log(`${groups.length} communities, ${Math.min(shown, groups.length)} zichtbaar`);
   };
 
