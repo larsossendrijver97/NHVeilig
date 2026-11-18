@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v1.0.1 (eenvoudige variant)
+ * Recent Communities v1.0.2 (eenvoudige variant)
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -49,10 +49,18 @@
       fontWeight: '700',
     },
     empty: { margin: '0' },
+    note: { margin: '0', color: 'rgba(0, 0, 0, 0.55)', fontSize: '13px', lineHeight: '20px' },
   };
 
   const log = (...args) => DEBUG && console.log('[recent-communities]', ...args);
   const applyStyle = (el, style) => el && Object.assign(el.style, style);
+
+  // `hidden` alleen werkt niet als er inline een display staat, dus beide zetten.
+  const setVisible = (el, visible, display) => {
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? display : 'none';
+  };
 
   // --- Opslag (per gebruiker, zodat een gedeelde pc geen lijsten mengt) ---
 
@@ -122,8 +130,9 @@
 
   // --- 2. Renderer ---
 
-  const fetchGroups = async (guids) => {
-    // Eén query met een alias per community; geen toegang geeft null terug.
+  const fetchData = async (guids) => {
+    // Eén query: per community een alias (geen toegang geeft null) plus of de
+    // gebruiker beheerder is.
     const fields = guids
       .map((g, i) => `g${i}: entity(guid: "${g}") { guid ... on Group { name url icon { download } } }`)
       .join('\n');
@@ -132,11 +141,14 @@
       method: 'POST',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: `query RecentCommunities {\n${fields}\n}` }),
+      body: JSON.stringify({ query: `query RecentCommunities {\nviewer { guid isAdmin }\n${fields}\n}` }),
     });
     const { data } = await response.json();
 
-    return guids.map((_, i) => data?.[`g${i}`]).filter((group) => group?.name);
+    return {
+      groups: guids.map((_, i) => data?.[`g${i}`]).filter((group) => group?.name),
+      isAdmin: Boolean(data?.viewer?.isAdmin),
+    };
   };
 
   // :hover en :focus-visible kunnen niet inline, dus via events.
@@ -172,6 +184,20 @@
     return li;
   };
 
+  // Melding voor beheerders/redacteuren als het blok voor gebruikers verborgen is.
+  const editorNote = (container) => {
+    let note = container.querySelector('[data-recent-communities-note]');
+    if (!note) {
+      note = document.createElement('p');
+      note.dataset.recentCommunitiesNote = '';
+      note.textContent =
+        'Alleen zichtbaar voor beheerders: gebruikers zien dit blok pas als ze een community hebben bezocht.';
+      applyStyle(note, STYLES.note);
+      container.append(note);
+    }
+    return note;
+  };
+
   const render = async (container) => {
     container.dataset.recentCommunitiesReady = '';
     const list = container.querySelector('[data-recent-communities-list]') || container;
@@ -183,21 +209,29 @@
     applyStyle(empty, STYLES.empty);
 
     const guids = read();
-    let groups = [];
-    if (guids.length) {
-      try {
-        groups = await fetchGroups(guids);
-      } catch (error) {
-        console.warn('[recent-communities] ophalen mislukt', error);
-      }
+    let groups;
+    let isAdmin;
+    try {
+      ({ groups, isAdmin } = await fetchData(guids));
+    } catch (error) {
+      console.warn('[recent-communities] ophalen mislukt', error);
+      return;
     }
 
     // Communities zonder toegang meteen uit de opslag halen.
     if (groups.length !== guids.length) write(groups.map((g) => g.guid));
 
     list.replaceChildren(...groups.map(renderItem));
-    if (empty) empty.hidden = groups.length > 0;
-    if ('recentCommunitiesHideEmpty' in container.dataset) container.hidden = groups.length === 0;
+    // Beheerders en redacteuren zien het blok altijd, ook als het leeg is,
+    // zodat het in de bewerkmodus niet verdwijnt.
+    const hideEmpty = 'recentCommunitiesHideEmpty' in container.dataset;
+    const canEdit = isAdmin || Boolean(document.querySelector('[aria-label^="Bewerkmodus"]'));
+    const isEmpty = groups.length === 0;
+    setVisible(empty, isEmpty, 'block');
+    if (hideEmpty) {
+      setVisible(editorNote(container), isEmpty && canEdit, 'block');
+      setVisible(container, !isEmpty || canEdit, 'block');
+    }
     log(`${groups.length} communities getoond`);
   };
 
