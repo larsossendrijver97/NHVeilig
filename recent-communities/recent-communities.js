@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.1.0
+ * Recent Communities v2.2.0
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -64,8 +64,9 @@
     // position + z-index: boven de absolute leader-afbeelding in dezelfde kolom.
     container: { position: 'relative', zIndex: '1', background: COLOR.card, borderRadius: '4px', overflow: 'hidden' },
     title: { margin: '0', padding: '16px', color: COLOR.title, fontSize: '18px', lineHeight: '1', fontWeight: '700' },
-    list: { listStyle: 'none', margin: '14px 0 0', padding: '0', display: 'grid', gap: '4px' },
-    item: { display: 'flex', alignItems: 'flex-start', padding: '16px 20px' },
+    // Compacter dan Figma (14 / 16 / 8 px): items stonden live te ver uit elkaar.
+    list: { listStyle: 'none', margin: '4px 0 0', padding: '0', display: 'grid', gap: '0' },
+    item: { display: 'flex', alignItems: 'flex-start', padding: '12px 20px' },
     avatarWrap: { flex: 'none', width: '60px', padding: '4px 20px 0 0', boxSizing: 'border-box' },
     avatar: {
       width: '40px',
@@ -82,7 +83,7 @@
       lineHeight: '24px',
       fontWeight: '700',
     },
-    content: { flex: '1', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '8px' },
+    content: { flex: '1', minWidth: '0', display: 'flex', flexDirection: 'column', gap: '4px' },
     header: { display: 'flex', alignItems: 'flex-start', gap: '8px' },
     name: {
       flex: '1',
