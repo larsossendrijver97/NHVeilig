@@ -1,4 +1,12 @@
 <!-- Vervangt de groepenwidget "Jouw recente communities" op /home-ingelogd -->
+
+<!-- Variant A: blok verbergen zolang er geen recente communities zijn -->
+<div class="recent-communities" data-recent-communities data-recent-communities-hide-empty hidden>
+  <h3 class="recent-communities__title">Jouw recente communities</h3>
+  <ul class="recent-communities__list" data-recent-communities-list></ul>
+</div>
+
+<!-- Variant B: blok altijd tonen, met een tekst als de lijst leeg is -->
 <div class="recent-communities" data-recent-communities>
   <h3 class="recent-communities__title">Jouw recente communities</h3>
   <ul class="recent-communities__list" data-recent-communities-list></ul>
