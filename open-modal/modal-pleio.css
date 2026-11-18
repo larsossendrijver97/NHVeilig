@@ -101,6 +101,29 @@ z-index:999;
   border: 0;
 }
 
+.btn.help{
+font-size:var(--ref-font-size-small);
+font-weight:700;
+color:#fff;
+padding:0.5em 1em;
+gap: 0.5rem;
+display: inline-flex;
+align-items: center;
+border-radius: var(--ref-shape-corner-2xl);
+background:#003A40;
+position:fixed;
+right:2em;
+bottom:2em;
+}
+
+.btn.help:hover{
+background:#01484F;
+}
+
+.btn.help:before{
+content:"\24D8";
+}
+
 /* Potloodje van Pleio (alleen beheerders) rechtsonder: "Hulp nodig?" ernaast zetten */
 body:has([class*="AdminOverlay__Wrapper"]:not([class*="AdminOverlay__PositionLeft"])) .btn.help {
   right: calc(20px + 56px + 12px); /* marge van de overlay + potloodje + tussenruimte */
