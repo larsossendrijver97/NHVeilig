@@ -1,21 +1,24 @@
 <!-- Homepage-blok: kies één variant.
      data-recent-communities-variant="detailed"  = Figma-ontwerp (ledenaantal, iconen, vastpinnen)
      weglaten of "default"                         = eenvoudige lijst
+     data-recent-communities-action="remove"     = kruisje om uit de lijst te halen ("pin" = vastpinnen, weglaten = geen knop)
+     data-recent-communities-pin-mode="keep"     = bij action="pin": "top" (standaard) = bovenaan, "keep" = valt nooit uit de lijst
+     data-recent-communities-hide-status         = slotje en oogje niet tonen
      data-recent-communities-limit="3"           = 3 per keer + "Laad meer" (weglaten = alles tonen)
      data-recent-communities-max-height="448"    = maximale hoogte (px of CSS-lengte), lijst scrolt
      data-recent-communities-overflow="fade"     = onderkant vervaagt zoals in Figma ("hard" = strakke rand)
-     data-recent-communities-hide-empty hidden   = verbergen zolang de lijst leeg is
+     data-recent-communities-hide-empty          = verbergen zolang de lijst leeg is
                                                    (beheerders zien het blok altijd) -->
 
+<!-- Figma-variant: scrollend met verloop -->
+<div data-recent-communities data-recent-communities-variant="detailed" data-recent-communities-action="remove" data-recent-communities-max-height="448" data-recent-communities-overflow="fade" data-recent-communities-hide-empty>
+  <h3>Jouw recente communities</h3>
+  <ul data-recent-communities-list></ul>
+</div>
+
 <!-- Eenvoudige variant -->
-<div data-recent-communities data-recent-communities-limit="3" data-recent-communities-hide-empty hidden>
+<div data-recent-communities data-recent-communities-limit="3" data-recent-communities-hide-empty>
   <h3>Jouw recente communities</h3>
   <ul data-recent-communities-list></ul>
   <button type="button" data-recent-communities-more hidden>Laad meer</button>
-</div>
-
-<!-- Alternatief ontwerp: scrollend met verloop -->
-<div data-recent-communities data-recent-communities-variant="detailed" data-recent-communities-max-height="448" data-recent-communities-overflow="fade" data-recent-communities-hide-empty hidden>
-  <h3>Jouw recente communities</h3>
-  <ul data-recent-communities-list></ul>
 </div>
