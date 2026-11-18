@@ -1,0 +1,47 @@
+/* Recent bezochte communities — in de eigen stylesheet van de site zetten */
+
+.recent-communities {
+  background: #fff;
+  border-radius: 8px;
+  padding: 32px;
+}
+
+.recent-communities__title {
+  margin: 0 0 24px;
+}
+
+.recent-communities__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.recent-communities__link {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.recent-communities__link:hover .recent-communities__name,
+.recent-communities__link:focus-visible .recent-communities__name {
+  text-decoration: underline;
+}
+
+.recent-communities__avatar {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f1f1f1 center / cover no-repeat;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.recent-communities__empty {
+  margin: 0;
+}
