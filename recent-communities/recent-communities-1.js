@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v1.0.2 (eenvoudige variant)
+ * Recent Communities v1.0.3 (eenvoudige variant)
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -31,7 +31,8 @@
   const GROUP_PATH = /^\/groups\/view\/([0-9a-f-]{36})(?:\/|$)/i;
 
   const STYLES = {
-    container: { background: '#fff', borderRadius: '8px', padding: '32px' },
+    // position + z-index: boven de absolute leader-afbeelding in dezelfde kolom.
+    container: { position: 'relative', zIndex: '1', background: '#fff', borderRadius: '8px', padding: '32px' },
     title: { margin: '0 0 24px' },
     list: { listStyle: 'none', margin: '0', padding: '0', display: 'grid', gap: '12px' },
     link: { display: 'flex', alignItems: 'center', gap: '16px', color: 'inherit', textDecoration: 'none' },
