@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.2.0
+ * Recent Communities v2.5.0
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -20,6 +20,15 @@
  *   data-recent-communities-variant="detailed"  Figma-ontwerp: ledenaantal,
  *                                       status-iconen en vastpinnen. Zonder dit
  *                                       attribuut (of "default"): eenvoudige lijst.
+ *   data-recent-communities-action="remove"  knop per community (alleen bij
+ *                                       "detailed"): "remove" = kruisje om uit de
+ *                                       lijst te halen, "pin" = vastpinnen bovenaan,
+ *                                       weglaten of "none" = geen knop
+ *   data-recent-communities-pin-mode="keep"  wat vastpinnen doet (bij action="pin"):
+ *                                       "top" (standaard) = bovenaan blijven staan,
+ *                                       "keep" = op volgorde van bezoek, maar valt
+ *                                       nooit uit de lijst
+ *   data-recent-communities-hide-status  slotje en oogje niet tonen
  *   data-recent-communities-limit="3"   aantal per keer; meer via de knop
  *                                       (zonder limiet: alles in één keer)
  *   data-recent-communities-max-height="448"  maximale hoogte (px, of elke
@@ -27,7 +36,8 @@
  *   data-recent-communities-overflow="fade"  rand onderaan laten vervagen zoals in
  *                                       Figma; "hard" (standaard) = strakke rand
  *   data-recent-communities-hide-empty  blok verbergen als de lijst leeg is
- *                                       (zet er ook `hidden` op tegen knipperen)
+ *                                       (geen `hidden` erbij zetten: dan is het
+ *                                       blok in de editor onbereikbaar)
  * Optionele onderdelen binnen het blok:
  *   [data-recent-communities-list]   de <ul> die gevuld wordt
  *   [data-recent-communities-more]   knop om meer te tonen
@@ -151,15 +161,25 @@
 
   const STYLES = { default: STYLES_DEFAULT, detailed: STYLES_DETAILED };
 
-  // pinOff, lock en eyeOff komen uit het Figma-ontwerp; pin (vastgepind) uit Lucide.
+  // pinOff, lock en eyeOff komen uit het Figma-ontwerp; pin en pinned uit Lucide.
   const ICONS = {
     pinOff: {
       width: 24, height: 24,
       body: '<path fill="currentColor" d="M3.707 2.293C3.317 1.902 2.683 1.902 2.293 2.293C1.902 2.683 1.902 3.317 2.293 3.707L3 3L3.707 2.293M20.293 21.707C20.683 22.098 21.317 22.098 21.707 21.707C22.098 21.317 22.098 20.683 21.707 20.293L21 21L20.293 21.707M15.707 5.207C16.098 4.817 16.098 4.183 15.707 3.793C15.317 3.402 14.683 3.402 14.293 3.793L15 4.5L15.707 5.207M11.044 7.042C10.653 7.432 10.653 8.066 11.044 8.456C11.434 8.847 12.068 8.847 12.458 8.456L11.751 7.749L11.044 7.042M9.532 10.118C10.049 9.924 10.311 9.348 10.117 8.831C9.923 8.314 9.347 8.052 8.83 8.246L9.181 9.182L9.532 10.118M7 10L6.649 9.064C6.515 9.114 6.394 9.192 6.293 9.293L7 10M5.5 11.5L4.793 10.793C4.402 11.183 4.402 11.817 4.793 12.207L5.5 11.5M12.5 18.5L11.793 19.207C12.183 19.598 12.817 19.598 13.207 19.207L12.5 18.5M14 17L14.707 17.707C14.808 17.606 14.886 17.485 14.936 17.351L14 17M15.756 15.165C15.95 14.648 15.688 14.072 15.171 13.878C14.654 13.684 14.078 13.946 13.884 14.463L14.82 14.814L15.756 15.165M15.543 11.544C15.152 11.935 15.152 12.568 15.543 12.958C15.934 13.349 16.567 13.349 16.957 12.958L16.25 12.251L15.543 11.544M20.207 9.707C20.598 9.316 20.598 8.683 20.207 8.293C19.816 7.902 19.183 7.902 18.793 8.293L19.5 9L20.207 9.707M9.707 15.707C10.098 15.317 10.098 14.683 9.707 14.293C9.317 13.902 8.683 13.902 8.293 14.293L9 15L9.707 15.707M3.793 18.793C3.402 19.183 3.402 19.817 3.793 20.207C4.183 20.598 4.817 20.598 5.207 20.207L4.5 19.5L3.793 18.793M15.207 3.293C14.817 2.902 14.183 2.902 13.793 3.293C13.402 3.683 13.402 4.317 13.793 4.707L14.5 4L15.207 3.293M19.293 10.207C19.683 10.598 20.317 10.598 20.707 10.207C21.098 9.817 21.098 9.183 20.707 8.793L20 9.5L19.293 10.207M3 3L2.293 3.707L20.293 21.707L21 21L21.707 20.293L3.707 2.293L3 3M15 4.5L14.293 3.793L11.044 7.042L11.751 7.749L12.458 8.456L15.707 5.207L15 4.5M9.181 9.182L8.83 8.246L6.649 9.064L7 10L7.351 10.936L9.532 10.118L9.181 9.182M7 10L6.293 9.293L4.793 10.793L5.5 11.5L6.207 12.207L7.707 10.707L7 10M5.5 11.5L4.793 12.207L11.793 19.207L12.5 18.5L13.207 17.793L6.207 10.793L5.5 11.5M12.5 18.5L13.207 19.207L14.707 17.707L14 17L13.293 16.293L11.793 17.793L12.5 18.5M14 17L14.936 17.351L15.756 15.165L14.82 14.814L13.884 14.463L13.064 16.649L14 17M16.25 12.251L16.957 12.958L20.207 9.707L19.5 9L18.793 8.293L15.543 11.544L16.25 12.251M9 15L8.293 14.293L3.793 18.793L4.5 19.5L5.207 20.207L9.707 15.707L9 15M14.5 4L13.793 4.707L19.293 10.207L20 9.5L20.707 8.793L15.207 3.293L14.5 4"/>',
     },
+    // Niet vastgepind: open speldje. Vastgepind: gevuld speldje.
     pin: {
       width: 24, height: 24,
       body: '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></g>',
+    },
+    pinned: {
+      width: 24, height: 24,
+      body: '<g fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></g>',
+    },
+    // Kruisje: hetzelfde icoon als de sluitknoppen van Pleio zelf.
+    remove: {
+      width: 12, height: 12, viewBox: '0 0 10 10',
+      body: '<path fill="currentColor" d="M8.535.05 9.95 1.464 6.414 5l3.535 3.535L8.535 9.95 5 6.414 1.464 9.949.05 8.535 3.586 5 .05 1.464 1.464.05 5 3.586z"/>',
     },
     lock: {
       width: 12, height: 18,
@@ -233,7 +253,13 @@
     if (!match) return;
 
     const guid = match[1].toLowerCase();
-    write(RECENT_KEY, [guid, ...read(RECENT_KEY).filter((g) => g !== guid)].slice(0, MAX_ITEMS));
+    // Vastgepinde communities vallen nooit af; de rest tot MAX_ITEMS.
+    const pinned = read(PINNED_KEY);
+    let unpinned = 0;
+    const list = [guid, ...read(RECENT_KEY).filter((g) => g !== guid)].filter(
+      (g) => pinned.includes(g) || ++unpinned <= MAX_ITEMS,
+    );
+    write(RECENT_KEY, list);
     log('bezoek opgeslagen', guid);
   };
 
@@ -260,7 +286,7 @@
     // Eén query: per community een alias (geen toegang geeft null) plus of de
     // gebruiker beheerder is.
     const fields = guids
-      .map((g, i) => `g${i}: entity(guid: "${g}") { guid ... on Group { name url memberCount isClosed isHidden icon { download } } }`)
+      .map((g, i) => `g${i}: entity(guid: "${g}") { guid ... on Group { name url memberCount isMembershipOnRequest isClosed icon { download } } }`)
       .join('\n');
 
     const response = await fetch('/graphql', {
@@ -278,11 +304,11 @@
   };
 
   const icon = (name, label) => {
-    const { width, height, body } = ICONS[name];
+    const { width, height, body, viewBox = `0 0 ${width} ${height}` } = ICONS[name];
     const span = document.createElement('span');
     span.style.display = 'block';
     span.style.lineHeight = '0';
-    span.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" focusable="false" ${
+    span.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${viewBox}" focusable="false" ${
       label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"'
     }>${label ? `<title>${label}</title>` : ''}${body}</svg>`;
     return span;
@@ -331,7 +357,49 @@
     return li;
   };
 
-  const renderDetailedItem = (group, isPinned, onTogglePin) => {
+  // Tooltip in de stijl van Pleio (zwart label onder het icoon), bij hover en focus.
+  let tooltipEl = null;
+  const showTooltip = (target, text) => {
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.setAttribute('role', 'tooltip');
+      tooltipEl.id = 'recent-communities-tooltip';
+      applyStyle(tooltipEl, {
+        position: 'fixed',
+        zIndex: '10000',
+        padding: '6px 10px',
+        borderRadius: '6px',
+        background: '#000',
+        color: '#fff',
+        fontSize: '14px',
+        fontWeight: '700',
+        lineHeight: '20px',
+        whiteSpace: 'nowrap',
+        pointerEvents: 'none',
+      });
+      document.body.append(tooltipEl);
+    }
+    tooltipEl.textContent = text;
+    tooltipEl.hidden = false;
+    const r = target.getBoundingClientRect();
+    const w = tooltipEl.offsetWidth;
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), window.innerWidth - w - 8);
+    tooltipEl.style.left = `${left}px`;
+    tooltipEl.style.top = `${r.bottom + 8}px`;
+  };
+  const hideTooltip = () => { if (tooltipEl) tooltipEl.hidden = true; };
+  window.addEventListener('scroll', hideTooltip, { passive: true, capture: true });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideTooltip(); });
+
+  const withTooltip = (el, text) => {
+    el.addEventListener('mouseenter', () => showTooltip(el, text));
+    el.addEventListener('mouseleave', hideTooltip);
+    el.addEventListener('focus', () => showTooltip(el, text));
+    el.addEventListener('blur', hideTooltip);
+    el.addEventListener('click', hideTooltip);
+  };
+
+  const renderDetailedItem = (group, { action, isPinned, onAction, showStatus }) => {
     const groupName = group.name.trim();
 
     const li = document.createElement('li');
@@ -356,19 +424,38 @@
     applyStyle(name, STYLES_DETAILED.name);
     underlineOnInteraction(name);
 
-    const pin = document.createElement('button');
-    pin.type = 'button';
-    pin.dataset.pin = '';
-    pin.setAttribute('aria-pressed', String(isPinned));
-    pin.setAttribute('aria-label', `${groupName} vastpinnen`);
-    pin.title = isPinned ? 'Losmaken' : 'Vastpinnen';
-    applyStyle(pin, { ...STYLES_DETAILED.iconBox, cursor: 'pointer', ...(isPinned && { color: COLOR.title }) });
-    pin.append(icon(isPinned ? 'pin' : 'pinOff'));
-    pin.addEventListener('click', () => onTogglePin(group.guid));
-
     const header = document.createElement('div');
     applyStyle(header, STYLES_DETAILED.header);
-    header.append(name, pin);
+    header.append(name);
+
+    if (action === 'pin' || action === 'remove') {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.action = '';
+      applyStyle(button, { ...STYLES_DETAILED.iconBox, cursor: 'pointer' });
+      if (action === 'pin') {
+        button.setAttribute('aria-pressed', String(isPinned));
+        button.setAttribute('aria-label', `${groupName} vastpinnen`);
+        button.append(icon(isPinned ? 'pinned' : 'pin'));
+        if (isPinned) {
+          // Vastgepind: donker gevuld speldje; bij hover/focus het doorgestreepte
+          // speldje, zodat duidelijk is dat een klik losmaakt.
+          button.style.color = COLOR.title;
+          const swap = (name) => () => button.replaceChildren(icon(name));
+          button.addEventListener('mouseenter', swap('pinOff'));
+          button.addEventListener('focus', swap('pinOff'));
+          button.addEventListener('mouseleave', swap('pinned'));
+          button.addEventListener('blur', swap('pinned'));
+        }
+        withTooltip(button, isPinned ? 'Losmaken' : 'Vastpinnen');
+      } else {
+        button.setAttribute('aria-label', `${groupName} uit deze lijst halen`);
+        button.append(icon('remove'));
+        withTooltip(button, 'Uit deze lijst halen');
+      }
+      button.addEventListener('click', () => onAction(group.guid));
+      header.append(button);
+    }
 
     const meta = document.createElement('span');
     meta.textContent = `${group.memberCount} ${group.memberCount === 1 ? 'lid' : 'leden'}`;
@@ -376,14 +463,18 @@
 
     const status = document.createElement('span');
     applyStyle(status, STYLES_DETAILED.status);
-    for (const [show, iconName, label] of [
-      [group.isClosed, 'lock', 'Besloten community'],
-      [group.isHidden, 'eyeOff', 'Verborgen community'],
-    ]) {
+    // Zelfde iconen en teksten als op de communities-pagina van Pleio.
+    const statusIcons = [
+      [group.isMembershipOnRequest, 'lock', 'Lid na goedkeuring'],
+      [group.isClosed, 'eyeOff', 'Content alleen zichtbaar voor leden'],
+    ];
+    for (const [show, iconName, label] of showStatus ? statusIcons : []) {
       if (!show) continue;
       const box = document.createElement('span');
+      box.tabIndex = 0;
       applyStyle(box, STYLES_DETAILED.iconBox);
       box.append(icon(iconName, label));
+      withTooltip(box, label);
       status.append(box);
     }
 
@@ -457,7 +548,7 @@
     return updateFade;
   };
 
-  const render = async (container, { focusPinOf } = {}) => {
+  const render = async (container, { focusAction } = {}) => {
     container.dataset.recentCommunitiesReady = '';
     const list = container.querySelector('[data-recent-communities-list]') || container;
     const more = container.querySelector('[data-recent-communities-more]');
@@ -475,7 +566,25 @@
     const containerDisplay = container.dataset.recentCommunitiesMaxHeight ? 'flex' : 'block';
 
     // Vastpinnen bestaat alleen in de uitgebreide variant.
-    const guids = variant === 'detailed' ? orderedGuids() : read(RECENT_KEY);
+    const actionAttr = container.dataset.recentCommunitiesAction;
+    const action = variant === 'detailed' && ['pin', 'remove'].includes(actionAttr) ? actionAttr : 'none';
+    const showStatus = !('recentCommunitiesHideStatus' in container.dataset);
+    // Vastgepinde communities staan alleen bovenaan als vastpinnen aan staat.
+    const pinMode = container.dataset.recentCommunitiesPinMode === 'keep' ? 'keep' : 'top';
+    const recent = read(RECENT_KEY);
+    let guids = recent;
+    if (action === 'pin' && pinMode === 'top') guids = orderedGuids();
+    if (action === 'pin' && pinMode === 'keep') {
+      guids = [...recent, ...read(PINNED_KEY).filter((g) => !recent.includes(g))];
+    }
+    const hideEmpty = 'recentCommunitiesHideEmpty' in container.dataset;
+    const hasEditButton = Boolean(document.querySelector('[aria-label^="Bewerkmodus"]'));
+
+    // Zonder opgeslagen bezoeken weten we nu al dat de lijst leeg is: meteen
+    // verbergen, zodat er geen leeg blok knippert. Het blok staat dus níet op
+    // `hidden` in de HTML, zodat het in de editor (waar dit script niet draait)
+    // gewoon zichtbaar en bereikbaar blijft.
+    if (hideEmpty && guids.length === 0 && !hasEditButton) setVisible(container, false, containerDisplay);
     let groups;
     let isAdmin;
     try {
@@ -493,14 +602,21 @@
     }
 
     const pinned = read(PINNED_KEY);
-    const togglePin = (guid) => {
-      write(PINNED_KEY, pinned.includes(guid) ? pinned.filter((g) => g !== guid) : [...pinned, guid]);
-      render(container, { focusPinOf: guid });
+    const onAction = (guid) => {
+      const index = groups.findIndex((g) => g.guid === guid);
+      if (action === 'pin') {
+        write(PINNED_KEY, pinned.includes(guid) ? pinned.filter((g) => g !== guid) : [...pinned, guid]);
+        render(container, { focusAction: { guid } });
+      } else {
+        write(RECENT_KEY, read(RECENT_KEY).filter((g) => g !== guid));
+        write(PINNED_KEY, pinned.filter((g) => g !== guid));
+        render(container, { focusAction: { index } });
+      }
     };
 
     const items = groups.map((group) =>
       variant === 'detailed'
-        ? renderDetailedItem(group, pinned.includes(group.guid), togglePin)
+        ? renderDetailedItem(group, { action, isPinned: pinned.includes(group.guid), onAction, showStatus })
         : renderDefaultItem(group));
 
     // Bij opnieuw renderen evenveel tonen als de gebruiker al had opengeklapt.
@@ -524,12 +640,17 @@
       };
     }
 
-    if (focusPinOf) list.querySelector(`[data-guid="${focusPinOf}"] [data-pin]`)?.focus();
+    // Focus terugzetten na een klik op de knop (toetsenbord blijft op zijn plek).
+    if (focusAction?.guid) {
+      list.querySelector(`[data-guid="${focusAction.guid}"] [data-action]`)?.focus();
+    } else if (focusAction && items.length) {
+      const next = items[Math.min(focusAction.index, items.length - 1)];
+      (next.querySelector('[data-action]') || next.querySelector('a'))?.focus();
+    }
 
     // Beheerders en redacteuren zien het blok altijd, ook als het leeg is,
     // zodat het in de bewerkmodus niet verdwijnt.
-    const hideEmpty = 'recentCommunitiesHideEmpty' in container.dataset;
-    const canEdit = isAdmin || Boolean(document.querySelector('[aria-label^="Bewerkmodus"]'));
+    const canEdit = isAdmin || hasEditButton;
     const isEmpty = groups.length === 0;
     setVisible(empty, isEmpty, 'block');
     if (hideEmpty) {
