@@ -1,5 +1,5 @@
 /*!
- * Recent Communities v2.8.0
+ * Recent Communities v2.9.0
  * © 2026 Lars Ossendrijver — https://larsossendrijver.com
  * Alle rechten voorbehouden. Gebruik, kopiëren of aanpassen alleen met
  * schriftelijke toestemming van de auteur.
@@ -23,8 +23,10 @@
  *                                       status-iconen, knop). Weglaten of
  *                                       "default" = eenvoudige lijst
  *   data-recent-communities-hide-status  slotje en oogje niet tonen
- *   data-recent-communities-limit="3"   aantal per keer + knop "Laad meer"
- *                                       (weglaten = alles in één keer)
+ *   data-recent-communities-limit="3"   aantal per keer + knop "Laad meer", die
+ *                                       er telkens evenveel bij laadt; de knop
+ *                                       komt er vanzelf bij (weglaten = alles)
+ *   data-recent-communities-more-label="Toon meer"  tekst van die knop
  *   data-recent-communities-max-height="448"  maximale hoogte (px of CSS-lengte
  *                                       zoals "60vh"); de lijst scrolt
  *   data-recent-communities-overflow="fade"  onderkant vervaagt zoals in Figma;
@@ -623,9 +625,20 @@
   const render = async (container, { focusAction } = {}) => {
     container.dataset.recentCommunitiesReady = '';
     const list = container.querySelector('[data-recent-communities-list]') || container;
-    const more = container.querySelector('[data-recent-communities-more]');
     const empty = container.querySelector('[data-recent-communities-empty]');
     const limit = Number(container.dataset.recentCommunitiesLimit) || Infinity;
+
+    // Met een limiet maakt het script zelf de knop "Laad meer" aan, tenzij die
+    // al in de HTML staat. Tekst aanpasbaar met data-recent-communities-more-label.
+    let more = container.querySelector('[data-recent-communities-more]');
+    if (!more && limit !== Infinity) {
+      more = document.createElement('button');
+      more.type = 'button';
+      more.dataset.recentCommunitiesMore = '';
+      more.hidden = true;
+      more.textContent = container.dataset.recentCommunitiesMoreLabel || 'Laad meer';
+      list.after(more);
+    }
     const variant = container.dataset.recentCommunitiesVariant === 'detailed' ? 'detailed' : 'default';
     const S = STYLES[variant];
 
